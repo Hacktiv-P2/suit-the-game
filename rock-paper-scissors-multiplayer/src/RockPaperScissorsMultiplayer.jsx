@@ -75,6 +75,40 @@ const RockPaperScissorsMultiplayer = () => {
     }
   }, [gameId, gameFinished]);
 
+  const [selectionCountdown, setSelectionCountdown] = useState(10); // Timer pemilihan
+  const [timerActive, setTimerActive] = useState(false); // Apakah timer aktif
+
+  useEffect(() => {
+    if (gameData && gameData.status === "ready" && !gameFinished) {
+      if (!timerActive) {
+        setTimerActive(true);
+        setSelectionCountdown(10); // Set timer 10 detik
+      }
+    }
+  }, [gameData, gameFinished, timerActive]);
+
+  useEffect(() => {
+    let timer;
+    if (timerActive && selectionCountdown > 0) {
+      timer = setTimeout(() => {
+        setSelectionCountdown(selectionCountdown - 1);
+      }, 1000);
+    } else if (selectionCountdown === 0) {
+      // Waktu habis, handle timeout
+      handleTimeout();
+    }
+    return () => clearTimeout(timer); // Bersihkan timeout saat komponen di-unmount
+  }, [selectionCountdown, timerActive]);
+
+  const handleTimeout = () => {
+    setTimerActive(false);
+    setHasChosen(true); // Mencegah pemain membuat pilihan lebih lanjut
+    // Jika salah satu pemain tidak membuat pilihan, Anda bisa menangani situasi ini dengan cara sesuai
+    const gameRef = ref(db, "games/" + gameId);
+    // Misalnya, ubah status game jika perlu
+    update(gameRef, { status: "timeout" });
+  };
+
   // Hapus game dari database setelah permainan selesai
   const deleteGame = () => {
     const gameRef = ref(db, "games/" + gameId);
@@ -125,7 +159,7 @@ const RockPaperScissorsMultiplayer = () => {
             type="text"
             placeholder="Masukkan Game ID"
             value={inputGameId}
-            onChange={(e) => setInputGameId(e.target.value)} // Update state saat input berubah
+            onChange={(e) => setInputGameId(e.target.value)}
           />
           <button onClick={joinGame}>Bergabung ke Game</button>
         </>
@@ -133,25 +167,35 @@ const RockPaperScissorsMultiplayer = () => {
       {gameData && (
         <>
           <div>GameId: {gameId}</div>
-          {!gameFinished ? (
+          {!gameFinished && !timerActive && (
+            <p>Menunggu pemain untuk membuat pilihan...</p>
+          )}
+          {!gameFinished && timerActive && (
             <div className="choices">
-              <button onClick={() => handleChoice("rock")} disabled={hasChosen}>
+              <button
+                onClick={() => handleChoice("rock")}
+                disabled={hasChosen || selectionCountdown === 0}
+              >
                 🪨 Batu
               </button>
               <button
                 onClick={() => handleChoice("paper")}
-                disabled={hasChosen}
+                disabled={hasChosen || selectionCountdown === 0}
               >
                 📄 Kertas
               </button>
               <button
                 onClick={() => handleChoice("scissors")}
-                disabled={hasChosen}
+                disabled={hasChosen || selectionCountdown === 0}
               >
                 ✂️ Gunting
               </button>
             </div>
-          ) : (
+          )}
+          {selectionCountdown > 0 && !hasChosen && (
+            <p>Waktu pemilihan tersisa: {selectionCountdown} detik</p>
+          )}
+          {gameFinished && (
             <p>Permainan selesai. Menghapus game dalam {countdown} detik...</p>
           )}
           <p>
