@@ -157,11 +157,14 @@ const RockPaperScissorsMultiplayer = () => {
           <p>
             Pemain 1 memilih:{" "}
             {gameData.player1.choice ? "Sudah Memilih" : "Belum memilih"}
+            {gameFinished && <span> (Pilihan: {gameData.player1.choice})</span>}
           </p>
           <p>
             Pemain 2 memilih:{" "}
             {gameData.player2.choice ? "Sudah Memilih" : "Belum memilih"}
+            {gameFinished && <span> (Pilihan: {gameData.player2.choice})</span>}
           </p>
+
           {gameData.player1.choice && gameData.player2.choice && (
             <>
               <p>
