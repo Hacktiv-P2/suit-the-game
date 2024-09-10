@@ -3,7 +3,7 @@ import logo from "../assets/Suit_High.png";
 const Navbar = () => {
   const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem("suit_access_token");
+    localStorage.removeItem("suit_username");
     navigate("/login");
   };
 

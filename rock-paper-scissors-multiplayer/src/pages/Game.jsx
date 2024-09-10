@@ -11,49 +11,15 @@ const Game = () => {
   const [gameId, setGameId] = useState(routeGameId || ""); // Set gameId from params if available
   const [currentPlayer, setCurrentPlayer] = useState("");
   const [gameData, setGameData] = useState(null);
-  const [inputGameId, setInputGameId] = useState(routeGameId || ""); // Use gameId from params for joining
   const [hasChosen, setHasChosen] = useState(false); 
   const [gameFinished, setGameFinished] = useState(false); 
   const [countdown, setCountdown] = useState(0); 
   const [player1Lives, setPlayer1Lives] = useState(3);
   const [player2Lives, setPlayer2Lives] = useState(3);
+  const [player1Name, setPlayer1Name] = useState("");
+  const [player2Name, setPlayer2Name] = useState("");
   
-  const createGame = () => {
-    const newGameId = Date.now().toString();
-    const gameRef = ref(db, "games/" + newGameId);
-    set(gameRef, {
-      player1: { choice: "", lives: 3 },
-      player2: { choice: "", lives: 3 },
-      status: "waiting",
-    }).then(() => {
-      setGameId(newGameId);
-      setCurrentPlayer("player1");
-      setHasChosen(false);
-      setGameFinished(false); 
-      setPlayer1Lives(3); 
-      setPlayer2Lives(3);
-    });
-  };
-
-  const joinGame = async () => {
-    const gameRef = ref(db, "games/" + inputGameId);
-    try {
-      const snapshot = await get(gameRef);
-      const data = snapshot.val();
-      if (data && data.status === "waiting") {
-        setGameId(inputGameId);
-        setCurrentPlayer("player2");
-        await update(gameRef, { status: "ready" });
-        setInputGameId("");
-        setHasChosen(false);
-      } else {
-        toast.error("Game tidak tersedia atau sudah dimulai");
-      }
-    } catch (error) {
-      console.error("Error joining game: ", error);
-      toast.error("Terjadi kesalahan saat bergabung ke game");
-    }
-  };
+  const playerName = localStorage.getItem("suit_username");
 
   const handleChoice = (choice) => {
     const gameRef = ref(db, "games/" + gameId);
@@ -66,6 +32,57 @@ const Game = () => {
       setHasChosen(true); 
     }
   };
+
+  const joinGame = () => {
+    const gameRef = ref(db, "games/" + gameId);
+  
+    get(gameRef).then((snapshot) => {
+      const data = snapshot.val();
+      console.log(data);
+  
+      // Ensure both player1 and player2 keys exist to avoid undefined errors
+      const player1Exists = data && data.player1 && data.player1.name;
+      const player2Exists = data && data.player2 && data.player2.name;
+  
+      if (player1Exists && !player2Exists) {
+        // Player 1 exists, assign current player as Player 2
+        update(gameRef, {
+          "player2/name": playerName, // Only update the name to avoid overwriting other data
+        });
+        setCurrentPlayer("player2");
+        setPlayer2Name(playerName);
+      } else if (!player1Exists) {
+        // No Player 1, assign current player as Player 1
+        update(gameRef, {
+          "player1/name": playerName, // Only update the name to avoid overwriting other data
+        });
+        setCurrentPlayer("player1");
+        setPlayer1Name(playerName);
+      } else if (player1Exists && data.player1.name === playerName) {
+        // Reconnect as Player 1 if the name matches
+        setCurrentPlayer("player1");
+        setPlayer1Name(playerName);
+      } else if (player2Exists && data.player2.name === playerName) {
+        // Reconnect as Player 2 if the name matches
+        setCurrentPlayer("player2");
+        setPlayer2Name(playerName);
+      } else {
+        // If both players are already in the game, show a message or handle accordingly
+        Swal.fire({
+          icon: "warning",
+          title: "Room Penuh!",
+          text: "Game ini sudah memiliki dua pemain.",
+        });
+      }
+    });
+  };
+  
+  // Run `joinGame` only once after the component loads
+  useEffect(() => {
+    if (gameId) {
+      joinGame();
+    }
+  }, [gameId]); // Ensure it runs only once after `gameId` is set
 
   const getRandomChoice = () => {
     const choices = ["rock", "paper", "scissors"];
@@ -97,18 +114,19 @@ const Game = () => {
       const gameRef = ref(db, "games/" + gameId);
       onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
+        console.log("Data snapshot: ", data);
         setGameData(data);
-
         if (data?.player1?.lives !== player1Lives || data?.player2?.lives !== player2Lives) {
           setPlayer1Lives(data?.player1?.lives || 3);
           setPlayer2Lives(data?.player2?.lives || 3);
         }
+        if (data?.player1?.name) setPlayer1Name(data.player1.name);
+        if (data?.player2?.name) setPlayer2Name(data.player2.name);
 
         if (data?.player1?.lives === 0 || data?.player2?.lives === 0) {
           setGameFinished(true);
           setCountdown(5);
         }
-
         if (data?.player1?.choice && data?.player2?.choice && !gameFinished) {
           const result = determineWinner(data.player1.choice, data.player2.choice);
           handleLivesUpdate(result);
@@ -254,19 +272,6 @@ const Game = () => {
     <div>
       <ToastContainer />
       <div>
-        {!gameId ? (
-          <>
-            <h1>Rock Paper Scissors Multiplayer</h1>
-            <button onClick={createGame}>Create Game</button>
-            <input
-              type="text"
-              placeholder="Masukkan ID Game"
-              value={inputGameId}
-              onChange={(e) => setInputGameId(e.target.value)}
-            />
-            <button onClick={joinGame}>Join Game</button>
-          </>
-        ) : (
           <>
             <h2>Game ID: {gameId}</h2>
             <p>Pemain saat ini: {currentPlayer}</p>
@@ -276,11 +281,10 @@ const Game = () => {
               <button onClick={() => handleChoice("paper")}>Paper</button>
               <button onClick={() => handleChoice("scissors")}>Scissors</button>
             </div>
-            <p>Player 1 lives: {player1Lives}</p>
-            <p>Player 2 lives: {player2Lives}</p>
+            <p>Player 1 ({player1Name}) lives: {player1Lives}</p> {/* Tampilkan nama Player 1 */}
+            <p>Player 2 ({player2Name}) lives: {player2Lives}</p> {/* Tampilkan nama Player 2 */}
             <p>Countdown: {selectionCountdown}</p>
           </>
-        )}
       </div>
     </div>
   );

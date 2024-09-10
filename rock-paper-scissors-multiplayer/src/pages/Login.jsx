@@ -7,7 +7,7 @@ const Login = () => {
 
   const handleLogin = () => {
     if (username) {
-      localStorage.setItem("suit_access_token", username);
+      localStorage.setItem("suit_username", username);
       alert("Login successful");
       navigate("/");
     } else {

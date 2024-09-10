@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     loader: () => {
-      const access_token = localStorage.getItem("suit_access_token");
+      const access_token = localStorage.getItem("suit_username");
       if (!access_token) {
         throw redirect("/login");
       }
@@ -19,7 +19,7 @@ export const router = createBrowserRouter([
     },
     children: [
       {
-        path: "/",
+        path: "",
         element: <Home />,
       },
       {
@@ -39,7 +39,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     loader: () => {
-      const access_token = localStorage.getItem("suit_access_token");
+      const access_token = localStorage.getItem("suit_username");
       if (access_token) {
         throw redirect("/");
       }
