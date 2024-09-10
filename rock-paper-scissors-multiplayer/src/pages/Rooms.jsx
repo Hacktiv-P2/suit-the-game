@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { ref, onValue, remove } from "firebase/database";
+import { ref, onValue, remove, set, push } from "firebase/database"; // Import push dan set untuk create room
 
 const Rooms = () => {
   const [gameRooms, setGameRooms] = useState({});
+  const navigate = useNavigate();
 
+  // Fetch existing game rooms from Firebase
   const fetchGameRooms = () => {
     const gameRoomsRef = ref(db, "games/");
-
     onValue(gameRoomsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -18,6 +20,28 @@ const Rooms = () => {
     });
   };
 
+  // Create a new game room
+  const createGameRoom = () => {
+    const roomId = Date.now().toString(); // Menggunakan timestamp dari Date untuk ID unik
+    const newRoomRef = ref(db, `games/${roomId}`);
+    const roomData = {
+      player1: { choice: "", lives: 3 },
+      player2: { choice: "", lives: 3 },
+      status: "waiting",
+    };
+
+    set(newRoomRef, roomData) // Save the new room to Firebase
+      .then(() => {
+        alert("New room created!");
+        fetchGameRooms(); // Refresh the room list
+      })
+      .catch((error) => {
+        console.error("Error creating room: ", error);
+        alert("Failed to create room");
+      });
+  };
+
+  // Handle room deletion
   const handleDeleteRoom = (roomId) => {
     const roomRef = ref(db, `games/${roomId}`);
     remove(roomRef)
@@ -31,6 +55,11 @@ const Rooms = () => {
       });
   };
 
+  // Handle entering a game room
+  const handleEnterGame = (roomId) => {
+    navigate(`/game/${roomId}`); // Navigate to the game page with the roomId
+  };
+
   useEffect(() => {
     fetchGameRooms();
   }, []);
@@ -42,6 +71,13 @@ const Rooms = () => {
         className="mb-4 bg-color2 text-white px-4 py-2 rounded hover:bg-color3"
       >
         Refresh Game Rooms
+      </button>
+
+      <button
+        onClick={createGameRoom} // Add button to create a new game room
+        className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Create New Game Room
       </button>
 
       <div className="flex flex-wrap justify-center items-center gap-6">
@@ -85,6 +121,12 @@ const Rooms = () => {
               <p className="bg-color3 text-white px-2 py-1 rounded">
                 Status: {gameRooms[roomId].status}
               </p>
+              <button
+                onClick={() => handleEnterGame(roomId)} // Add button to enter the game
+                className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Enter Game
+              </button>
               <button
                 onClick={() => handleDeleteRoom(roomId)}
                 className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
