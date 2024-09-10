@@ -17,7 +17,7 @@ const Game = () => {
   const [countdown, setCountdown] = useState(0); 
   const [player1Lives, setPlayer1Lives] = useState(3);
   const [player2Lives, setPlayer2Lives] = useState(3);
-  
+
   const createGame = () => {
     const newGameId = Date.now().toString();
     const gameRef = ref(db, "games/" + newGameId);

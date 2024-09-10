@@ -19,7 +19,7 @@ const Navbar = () => {
           />
         </Link>
         <div className="flex-grow"></div>
-        <ul className="flex space-x-4">
+        <ul className="flex space-x-4 items-center">
           <li>
             <Link
               to={"/"}
@@ -37,12 +37,12 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link
+            <button
               onClick={handleLogout}
               className="text-color2 hover:text-color4 cursor-pointer hover:bg-color2 p-2 rounded"
             >
               Logout
-            </Link>
+            </button>
           </li>
         </ul>
       </div>
