@@ -1,41 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { ref, set, onValue, update, remove, get } from "firebase/database";
 import { db } from "./firebase";
+import Swal from 'sweetalert2';
 
 const RockPaperScissorsMultiplayer = () => {
   const [gameId, setGameId] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState("");
   const [gameData, setGameData] = useState(null);
   const [inputGameId, setInputGameId] = useState("");
-  const [hasChosen, setHasChosen] = useState(false); // Untuk mencegah pemain ganti pilihan
-  const [gameFinished, setGameFinished] = useState(false); // Untuk menandai permainan selesai
-  const [countdown, setCountdown] = useState(0); // Untuk countdown sebelum menghapus game
+  const [hasChosen, setHasChosen] = useState(false); 
+  const [gameFinished, setGameFinished] = useState(false); 
+  const [countdown, setCountdown] = useState(0); 
+
+  const [player1Lives, setPlayer1Lives] = useState(3);
+  const [player2Lives, setPlayer2Lives] = useState(3);
 
   // Membuat game baru
   const createGame = () => {
-    const newGameId = Date.now().toString(); // ID unik untuk game
+    const newGameId = Date.now().toString();
     const gameRef = ref(db, "games/" + newGameId);
     set(gameRef, {
-      player1: { choice: "" },
-      player2: { choice: "" },
-      status: "waiting", // Status game menunggu pemain lain
+      player1: { choice: "", lives: 3 },
+      player2: { choice: "", lives: 3 },
+      status: "waiting",
+    }).then(() => {
+      setGameId(newGameId);
+      setCurrentPlayer("player1");
+      setHasChosen(false); 
+      setGameFinished(false); 
+      setPlayer1Lives(3); 
+      setPlayer2Lives(3);
     });
-    setGameId(newGameId);
-    setCurrentPlayer("player1");
   };
 
   // Bergabung ke game
   const joinGame = async () => {
     const gameRef = ref(db, "games/" + inputGameId);
     try {
-      const snapshot = await get(gameRef); // Mengambil data sekali
+      const snapshot = await get(gameRef);
       const data = snapshot.val();
       if (data && data.status === "waiting") {
         setGameId(inputGameId);
         setCurrentPlayer("player2");
-        // Ubah status game setelah player 2 bergabung
         await update(gameRef, { status: "ready" });
         setInputGameId("");
+        setHasChosen(false); 
       } else {
         alert("Game tidak tersedia atau sudah dimulai");
       }
@@ -54,7 +63,7 @@ const RockPaperScissorsMultiplayer = () => {
       } else if (currentPlayer === "player2") {
         update(gameRef, { "player2/choice": choice });
       }
-      setHasChosen(true); // Cegah pemain mengganti pilihan
+      setHasChosen(true); 
     }
   };
 
@@ -66,14 +75,71 @@ const RockPaperScissorsMultiplayer = () => {
         const data = snapshot.val();
         setGameData(data);
 
+        // Jika salah satu pemain nyawanya sudah 0, maka game berakhir dan dihapus
+        if (data?.player1?.lives === 0 || data?.player2?.lives === 0) {
+          setGameFinished(true);
+          setCountdown(10);
+          deleteGame(); // Hapus game dari database
+        }
+
         // Jika kedua pemain sudah memilih, tentukan pemenang
         if (data?.player1?.choice && data?.player2?.choice && !gameFinished) {
-          setGameFinished(true);
-          setCountdown(10); // Mulai countdown 10 detik
+          const result = determineWinner(data.player1.choice, data.player2.choice);
+          handleLivesUpdate(result);
         }
       });
     }
   }, [gameId, gameFinished]);
+
+  // Update nyawa pemain berdasarkan hasil permainan
+  const handleLivesUpdate = (result) => {
+    if (result === "Player 1 wins") {
+      setPlayer2Lives((prevLives) => Math.max(prevLives - 1, 0));
+    } else if (result === "Player 2 wins") {
+      setPlayer1Lives((prevLives) => Math.max(prevLives - 1, 0));
+    }
+
+    // Reset pilihan setelah setiap ronde
+    const gameRef = ref(db, "games/" + gameId);
+    update(gameRef, { "player1/choice": "", "player2/choice": "" }).then(() => {
+      // Cek jika nyawa pemain habis, akhiri permainan dan tampilkan notifikasi
+      if (player1Lives === 0) {
+        setGameFinished(true);
+        setCountdown(10);
+        if (currentPlayer === "player2") {
+          Swal.fire({
+            icon: 'success',
+            title: 'Selamat!',
+            text: 'Kamu menang!',
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Maaf!',
+            text: 'Kamu kalah!',
+          });
+        }
+      } else if (player2Lives === 0) {
+        setGameFinished(true);
+        setCountdown(10);
+        if (currentPlayer === "player1") {
+          Swal.fire({
+            icon: 'success',
+            title: 'Selamat!',
+            text: 'Kamu menang!',
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Maaf!',
+            text: 'Kamu kalah!',
+          });
+        }
+      } else {
+        setHasChosen(false); // Reset pilihan untuk ronde berikutnya
+      }
+    });
+  };
 
   // Hapus game dari database setelah permainan selesai
   const deleteGame = () => {
@@ -81,9 +147,11 @@ const RockPaperScissorsMultiplayer = () => {
     remove(gameRef)
       .then(() => {
         alert("Permainan selesai dan game telah dihapus.");
-        setGameId(""); // Reset state
+        setGameId("");
         setHasChosen(false);
         setGameFinished(false);
+        setPlayer1Lives(3); // Reset nyawa pemain
+        setPlayer2Lives(3); // Reset nyawa pemain
       })
       .catch((error) => {
         console.error("Gagal menghapus game: ", error);
@@ -98,9 +166,9 @@ const RockPaperScissorsMultiplayer = () => {
         setCountdown(countdown - 1);
       }, 1000);
     } else if (countdown === 0 && gameFinished) {
-      deleteGame(); // Hapus game setelah countdown selesai
+      deleteGame(); 
     }
-    return () => clearTimeout(timer); // Bersihkan timeout saat komponen di-unmount
+    return () => clearTimeout(timer); 
   }, [countdown, gameFinished]);
 
   // Tentukan pemenang
@@ -115,6 +183,47 @@ const RockPaperScissorsMultiplayer = () => {
     }
     return "Player 2 wins";
   };
+
+  // Menampilkan pesan kemenangan menggunakan Swal
+  useEffect(() => {
+    if (gameFinished && gameData) {
+      const winner = determineWinner(gameData.player1.choice, gameData.player2.choice);
+      if (winner === "Player 1 wins") {
+        Swal.fire({
+          icon: 'success',
+          title: 'Selamat!',
+          text: 'Pemain 1 menang!',
+        });
+        if (currentPlayer === "player2") {
+          Swal.fire({
+            icon: 'error',
+            title: 'Maaf!',
+            text: 'Kamu kalah!',
+          });
+        }
+      } else if (winner === "Player 2 wins") {
+        Swal.fire({
+          icon: 'success',
+          title: 'Selamat!',
+          text: 'Pemain 2 menang!',
+        });
+        if (currentPlayer === "player1") {
+          Swal.fire({
+            icon: 'error',
+            title: 'Maaf!',
+            text: 'Kamu kalah!',
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: 'info',
+          title: 'Hasil',
+          text: 'Permainan berakhir dengan hasil seri!',
+        });
+      }
+    }
+  }, [gameFinished, gameData, currentPlayer]);
+
   return (
     <div className="game-container">
       <h1>Gunting Kertas Batu Multiplayer</h1>
@@ -125,7 +234,7 @@ const RockPaperScissorsMultiplayer = () => {
             type="text"
             placeholder="Masukkan Game ID"
             value={inputGameId}
-            onChange={(e) => setInputGameId(e.target.value)} // Update state saat input berubah
+            onChange={(e) => setInputGameId(e.target.value)}
           />
           <button onClick={joinGame}>Bergabung ke Game</button>
         </>
@@ -133,6 +242,8 @@ const RockPaperScissorsMultiplayer = () => {
       {gameData && (
         <>
           <div>GameId: {gameId}</div>
+          <p>Nyawa Pemain 1: {player1Lives}</p>
+          <p>Nyawa Pemain 2: {player2Lives}</p>
           {!gameFinished ? (
             <div className="choices">
               <button onClick={() => handleChoice("rock")} disabled={hasChosen}>
@@ -155,12 +266,10 @@ const RockPaperScissorsMultiplayer = () => {
             <p>Permainan selesai. Menghapus game dalam {countdown} detik...</p>
           )}
           <p>
-            Pemain 1 memilih:{" "}
-            {gameData.player1.choice ? "Sudah Memilih" : "Belum memilih"}
+            Pemain 1: {gameData.player1.choice || "Belum memilih"}
           </p>
           <p>
-            Pemain 2 memilih:{" "}
-            {gameData.player2.choice ? "Sudah Memilih" : "Belum memilih"}
+            Pemain 2: {gameData.player2.choice || "Belum memilih"}
           </p>
           {gameData.player1.choice && gameData.player2.choice && (
             <>
