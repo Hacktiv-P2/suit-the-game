@@ -207,7 +207,7 @@ const RockPaperScissorsMultiplayer = () => {
     const gameRef = ref(db, "games/" + gameId);
     remove(gameRef)
       .then(() => {
-        toast.success("Permainan selesai dan game telah dihapus.");
+        toast.success("Permainan selesai , main lagi yuk :).");
         setGameId("");
         setHasChosen(false);
         setGameFinished(false);
