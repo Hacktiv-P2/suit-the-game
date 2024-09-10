@@ -17,6 +17,9 @@ const RockPaperScissorsMultiplayer = () => {
   const [countdown, setCountdown] = useState(0); 
   const [player1Lives, setPlayer1Lives] = useState(3);
   const [player2Lives, setPlayer2Lives] = useState(3);
+  const [player1Emote, setPlayer1Emote] = useState(""); // State untuk emote pemain 1
+  const [player2Emote, setPlayer2Emote] = useState(""); // State untuk emote pemain 2
+  // const [showEmote, setShowEmote] = useState(false); // Tambahkan state untuk mengontrol visibilitas emote
 
   // Refs for audio elements
   const rockAudioRef = useRef(null);
@@ -24,6 +27,8 @@ const RockPaperScissorsMultiplayer = () => {
   const scissorsAudioRef = useRef(null);
   const joinGameAudioRef = useRef(null);
   const muatGameAudioRef = useRef(null);
+  const winAudioRef = useRef(new Audio("/assets/win.mp3")); // Tambahkan referensi audio untuk menang
+  const loseAudioRef = useRef(new Audio("/assets/Lose.mp3")); // Tambahkan referensi audio untuk kalah
 
   // Fungsi untuk memainkan suara berdasarkan pilihan
   const playSound = (choice) => {
@@ -52,6 +57,20 @@ const RockPaperScissorsMultiplayer = () => {
       }
       setHasChosen(true); 
     }
+  };
+
+  // Fungsi untuk mengirim emote
+  const sendEmote = (emote) => {
+    const gameRef = ref(db, "games/" + gameId);
+    if (currentPlayer === "player1") {
+      setPlayer1Emote(emote);
+      update(gameRef, { "player1/emote": emote });
+    } else if (currentPlayer === "player2") {
+      setPlayer2Emote(emote);
+      update(gameRef, { "player2/emote": emote });
+    }
+    // setShowEmote(true); // Tampilkan emote
+    // setTimeout(() => setShowEmote(false), 1000); // Sembunyikan setelah 1 detik
   };
 
   // Membuat game baru
@@ -121,6 +140,9 @@ const RockPaperScissorsMultiplayer = () => {
           const result = determineWinner(data.player1.choice, data.player2.choice);
           handleLivesUpdate(result);
         }
+
+        setPlayer1Emote(data?.player1?.emote || ""); // Update emote pemain 1
+        setPlayer2Emote(data?.player2?.emote || ""); // Update emote pemain 2
       });
     }
   }, [gameId, gameFinished, player1Lives, player2Lives]);
@@ -152,6 +174,7 @@ const RockPaperScissorsMultiplayer = () => {
         setGameFinished(true);
         setCountdown(5); // Ubah countdown menjadi 5 detik
         if (newPlayer1Lives === 0) {
+          loseAudioRef.current.play(); // Mainkan suara kalah
           Swal.fire({
             title: 'Cupu!',
             imageUrl: 'https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg',
@@ -159,6 +182,7 @@ const RockPaperScissorsMultiplayer = () => {
              imageHeight: 100,
           });
           if (currentPlayer === "player1") {
+            loseAudioRef.current.play()
             Swal.fire({
               title: 'Cupu!',
               imageUrl: 'https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg',
@@ -166,6 +190,7 @@ const RockPaperScissorsMultiplayer = () => {
                imageHeight: 100,
             });
           } else if (currentPlayer === "player2") {
+            winAudioRef.current.play()
             Swal.fire({
               title: 'Selamat!',
               imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUGTFp8MOe4Q3t8-pKo2nrdGXdq--f3nJLNA&s',
@@ -174,6 +199,7 @@ const RockPaperScissorsMultiplayer = () => {
             });
           }
         } else if (newPlayer2Lives === 0) {
+          loseAudioRef.current.play(); // Mainkan suara menang
           Swal.fire({
             title: 'Cupu!',
             imageUrl: 'https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg',
@@ -181,6 +207,7 @@ const RockPaperScissorsMultiplayer = () => {
              imageHeight: 100,
           });
           if (currentPlayer === "player1") {
+            winAudioRef.current.play()
             Swal.fire({
               title: 'Selamat!',
               imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUGTFp8MOe4Q3t8-pKo2nrdGXdq--f3nJLNA&s',
@@ -188,6 +215,7 @@ const RockPaperScissorsMultiplayer = () => {
               imageHeight: 100,
             });
           } else if (currentPlayer === "player2") {
+            loseAudioRef.current.play()
             Swal.fire({
               title: 'Cupu!',
               imageUrl: 'https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg',
@@ -283,7 +311,7 @@ const RockPaperScissorsMultiplayer = () => {
   const player2Icons = Array(player2Lives).fill("❤️"); // Menggunakan icon hati
 
   return (
-    <div className="game-container block shadow-lg" style={{ padding: '20px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', backgroundColor: '#2A2D34', maxWidth: '600px', margin: 'auto' }}>
+    <div className="game-container block shadow-lg" style={{ padding: '20px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', backgroundColor: '#2A2D34', maxWidth: '600px', margin: 'auto', zoom: '90%' }}>
     <h1 style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', color: '#F7F7F7' }}>Multiplayer Showdown: Gunting Kertas Batu</h1>
     <br />
       {!gameId && (
@@ -318,11 +346,18 @@ const RockPaperScissorsMultiplayer = () => {
         <>
           {!gameFinished && (
             <>
+            {/* indikator player */}
+              <div style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', padding: '10px', borderRadius: '5px', backgroundColor: '#f0f0f0', color: 'black' }}>{currentPlayer} {gameData[currentPlayer].choice}</div>
+              <br />
               <div>GameId: {gameId}</div>
               <br />
-              <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Pemain 1: {player1Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>
-              <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Pemain 2: {player2Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>
+              {currentPlayer === "player1" && <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Anda: {player1Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>}
+              {currentPlayer === "player2" && <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Anda: {player2Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>}
               <br />
+              <div>
+            {currentPlayer === "player1" && <p> Provocation {'=>'}  {player2Emote}</p>}
+            {currentPlayer === "player2" && <p> Provocation {'=>'} {player1Emote}</p>}
+            </div>
             </>
           )}
           {!gameFinished ? (
@@ -362,6 +397,7 @@ const RockPaperScissorsMultiplayer = () => {
               </p>
             </>
           )}
+          <br />
           {gameData.player1.choice && gameData.player2.choice && (
             <>
               <p>
@@ -374,6 +410,22 @@ const RockPaperScissorsMultiplayer = () => {
               {gameFinished && countdown > 0 && <p>Countdown: {countdown}</p>}
             </>
           )}
+          <div className="emote-container">
+            <p>emote here:</p>
+            <select onChange={(e) => sendEmote(e.target.value)}>
+              <option value="">Pilih emote</option>
+              <option value="✂️">Gunting</option>
+              <option value="🪨">Batu</option>
+              <option value="📄">Kertas</option>
+              <option value="gua pilih gunting">teks: gua pilih gunting</option>
+              <option value="gua pilih batu">teks: gua pilih batu</option>
+              <option value="gua pilih kertas">teks: gua pilih kertas</option>
+            </select>
+            <br />
+            <br />
+            <input type="text" onChange={(e) => sendEmote(e.target.value)} placeholder="Ketik roastinganmu!" />
+          </div>
+          
         </>
       )}
       <ToastContainer />
