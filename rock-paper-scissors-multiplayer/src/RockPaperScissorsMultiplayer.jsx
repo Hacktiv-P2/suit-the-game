@@ -58,6 +58,35 @@ const RockPaperScissorsMultiplayer = () => {
     }
   };
 
+  // Fungsi untuk memilih secara acak
+  const getRandomChoice = () => {
+    const choices = ["rock", "paper", "scissors"];
+    return choices[Math.floor(Math.random() * choices.length)];
+  };
+
+  // Handle timeout jika pemain tidak membuat pilihan
+  const handleTimeout = async () => {
+    setTimerActive(false);
+    setHasChosen(true); // Mencegah pemain membuat pilihan lebih lanjut
+    const gameRef = ref(db, "games/" + gameId);
+
+    // Pilih acak untuk pemain yang belum memilih
+    const updates = {};
+    if (!gameData.player1.choice) {
+      updates["player1/choice"] = getRandomChoice();
+    }
+    if (!gameData.player2.choice) {
+      updates["player2/choice"] = getRandomChoice();
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await update(gameRef, updates);
+    }
+
+    // Ubah status game jika perlu
+    update(gameRef, { status: "timeout" });
+  };
+
   // Pantau data game dari Firebase
   useEffect(() => {
     if (gameId) {
@@ -85,6 +114,9 @@ const RockPaperScissorsMultiplayer = () => {
         setSelectionCountdown(10); // Set timer 10 detik
       }
     }
+    if (gameFinished) {
+      setSelectionCountdown(0);
+    }
   }, [gameData, gameFinished, timerActive]);
 
   useEffect(() => {
@@ -99,15 +131,6 @@ const RockPaperScissorsMultiplayer = () => {
     }
     return () => clearTimeout(timer); // Bersihkan timeout saat komponen di-unmount
   }, [selectionCountdown, timerActive]);
-
-  const handleTimeout = () => {
-    setTimerActive(false);
-    setHasChosen(true); // Mencegah pemain membuat pilihan lebih lanjut
-    // Jika salah satu pemain tidak membuat pilihan, Anda bisa menangani situasi ini dengan cara sesuai
-    const gameRef = ref(db, "games/" + gameId);
-    // Misalnya, ubah status game jika perlu
-    update(gameRef, { status: "timeout" });
-  };
 
   // Hapus game dari database setelah permainan selesai
   const deleteGame = () => {
@@ -149,6 +172,7 @@ const RockPaperScissorsMultiplayer = () => {
     }
     return "Player 2 wins";
   };
+
   return (
     <div className="game-container">
       <h1>Gunting Kertas Batu Multiplayer</h1>
@@ -192,7 +216,7 @@ const RockPaperScissorsMultiplayer = () => {
               </button>
             </div>
           )}
-          {selectionCountdown > 0 && !hasChosen && (
+          {selectionCountdown > 0 && gameData.status === "ready" && (
             <p>Waktu pemilihan tersisa: {selectionCountdown} detik</p>
           )}
           {gameFinished && (
@@ -200,11 +224,15 @@ const RockPaperScissorsMultiplayer = () => {
           )}
           <p>
             Pemain 1 memilih:{" "}
-            {gameData.player1.choice ? "Sudah Memilih" : "Belum memilih"}
+            {gameData.player1.choice
+              ? gameData.player1.choice
+              : "Belum memilih"}
           </p>
           <p>
             Pemain 2 memilih:{" "}
-            {gameData.player2.choice ? "Sudah Memilih" : "Belum memilih"}
+            {gameData.player2.choice
+              ? gameData.player2.choice
+              : "Belum memilih"}
           </p>
           {gameData.player1.choice && gameData.player2.choice && (
             <>
@@ -215,7 +243,7 @@ const RockPaperScissorsMultiplayer = () => {
                   gameData.player2.choice
                 )}
               </p>
-              {gameFinished && countdown > 0 && <p>Countdown: {countdown}</p>}
+              {gameFinished && countdown > 0}
             </>
           )}
         </>
