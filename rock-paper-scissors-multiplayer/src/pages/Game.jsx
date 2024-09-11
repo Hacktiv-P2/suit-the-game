@@ -1,319 +1,267 @@
-import React, { useState, useEffect } from "react";
-import { ref, set, onValue, update, remove, get } from "firebase/database";
-import { db } from "../firebase";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  update,
+  remove,
+  off,
+} from "firebase/database";
 import Swal from "sweetalert2";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate, useParams } from "react-router-dom"; // Import useParams
 
 const Game = () => {
-  const { gameId: routeGameId } = useParams(); // Get gameId from params
-  const [gameId, setGameId] = useState(routeGameId || ""); // Set gameId from params if available
-  const [currentPlayer, setCurrentPlayer] = useState("");
+  const { gameId } = useParams(); // Mengambil gameId dari params
+  const navigate = useNavigate(); // Untuk navigasi setelah game berakhir
+  const db = getDatabase(); // Mengakses Realtime Database Firebase
   const [gameData, setGameData] = useState(null);
-  const [hasChosen, setHasChosen] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [player1Lives, setPlayer1Lives] = useState(3);
-  const [player2Lives, setPlayer2Lives] = useState(3);
-  const [player1Name, setPlayer1Name] = useState("");
-  const [player2Name, setPlayer2Name] = useState("");
+  const [player, setPlayer] = useState(null); // player1 atau player2
+  const [isReady, setIsReady] = useState(false);
+  const [p1Lives, setP1Lives] = useState(3);
+  const [p2Lives, setP2Lives] = useState(3);
+  const [countdown, setCountdown] = useState(5); // countdown 10 detik
   const playerName = localStorage.getItem("suit_username");
-  const navigate = useNavigate();
 
-  const handleChoice = (choice) => {
-    const gameRef = ref(db, "games/" + gameId);
-    if (!gameId) {
-      Swal.fire({
-        icon: "warning",
-        title: "Room Not Found!",
-        text: "Room Tidak ditemukan.",
-      });
-      navigate("/rooms");
-    } else if (!hasChosen && !gameFinished) {
-      if (currentPlayer === "player1") {
-        update(gameRef, { "player1/choice": choice });
-      } else if (currentPlayer === "player2") {
-        update(gameRef, { "player2/choice": choice });
-      }
-      setHasChosen(true);
-    }
-  };
-
-  const joinGame = () => {
-    const gameRef = ref(db, "games/" + gameId);
-
-    get(gameRef).then((snapshot) => {
+  useEffect(() => {
+    // Mendapatkan data dari Firebase berdasarkan gameId
+    const gameRef = ref(db, `games/${gameId}`);
+    onValue(gameRef, (snapshot) => {
       const data = snapshot.val();
-      console.log(data);
-
-      // Ensure both player1 and player2 keys exist to avoid undefined errors
-      const player1Exists = data && data.player1 && data.player1.name;
-      const player2Exists = data && data.player2 && data.player2.name;
-
-      if (!player1Exists) {
-        // Tidak ada Player 1, assign current player sebagai Player 1
-        update(gameRef, {
-          "player1/name": playerName, // Hanya update nama untuk menghindari data lain ter-overwrite
-        });
-        setCurrentPlayer("player1");
-        setPlayer1Name(playerName);
-      } else if (player1Exists && data.player1.name === playerName) {
-        // Reconnect sebagai Player 1 jika nama cocok
-        setCurrentPlayer("player1");
-        setPlayer1Name(playerName);
-      } else if (!player2Exists) {
-        // Tidak ada Player 2, assign current player sebagai Player 2
-        update(gameRef, {
-          "player2/name": playerName, // Hanya update nama untuk menghindari data lain ter-overwrite
-        });
-        setCurrentPlayer("player2");
-        setPlayer2Name(playerName);
-      } else if (player2Exists && data.player2.name === playerName) {
-        // Reconnect sebagai Player 2 jika nama cocok
-        setCurrentPlayer("player2");
-        setPlayer2Name(playerName);
-      } else {
-        // Jika kedua player sudah ada, tampilkan pesan
-        Swal.fire({
-          icon: "warning",
-          title: "Room Penuh!",
-          text: "Game ini sudah memiliki dua pemain.",
-        });
-      }
-    });
-  };
-
-  // Run `joinGame` only once after the component loads
-  useEffect(() => {
-    if (gameId) {
-      joinGame();
-    }
-  }, [gameId]); // Ensure it runs only once after `gameId` is set
-
-  const getRandomChoice = () => {
-    const choices = ["rock", "paper", "scissors"];
-    return choices[Math.floor(Math.random() * choices.length)];
-  };
-
-  const handleTimeout = async () => {
-    setTimerActive(false);
-    setHasChosen(true);
-    const gameRef = ref(db, "games/" + gameId);
-
-    const updates = {};
-    if (!gameData.player1.choice) {
-      updates["player1/choice"] = getRandomChoice();
-    }
-    if (!gameData.player2.choice) {
-      updates["player2/choice"] = getRandomChoice();
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await update(gameRef, updates);
-    }
-
-    update(gameRef, { status: "timeout" });
-  };
-
-  useEffect(() => {
-    if (gameId) {
-      const gameRef = ref(db, "games/" + gameId);
-      onValue(gameRef, (snapshot) => {
-        const data = snapshot.val();
-        console.log("Data snapshot: ", data);
+      if (data) {
         setGameData(data);
-        if (
-          data?.player1?.lives !== player1Lives ||
-          data?.player2?.lives !== player2Lives
-        ) {
-          setPlayer1Lives(data?.player1?.lives || 3);
-          setPlayer2Lives(data?.player2?.lives || 3);
-        }
-        if (data?.player1?.name) setPlayer1Name(data.player1.name);
-        if (data?.player2?.name) setPlayer2Name(data.player2.name);
+        console.log("Game data updated:", data);
+        setP1Lives(data.player1.lives);
+        setP2Lives(data.player2.lives);
 
-        if (data?.player1?.lives === 0 || data?.player2?.lives === 0) {
-          setGameFinished(true);
-          setCountdown(5);
-        }
-        if (data?.player1?.choice && data?.player2?.choice && !gameFinished) {
-          const result = determineWinner(
-            data.player1.choice,
-            data.player2.choice
-          );
-          handleLivesUpdate(result);
-        }
-      });
-    }
-  }, [gameId, gameFinished, player1Lives, player2Lives]);
-
-  const handleLivesUpdate = (result) => {
-    let newPlayer1Lives = player1Lives;
-    let newPlayer2Lives = player2Lives;
-
-    if (result === "Player 1 wins") {
-      newPlayer2Lives = Math.max(player2Lives - 1, 0);
-    } else if (result === "Player 2 wins") {
-      newPlayer1Lives = Math.max(player1Lives - 1, 0);
-    }
-
-    const gameRef = ref(db, "games/" + gameId);
-    update(gameRef, {
-      "player1/lives": newPlayer1Lives,
-      "player2/lives": newPlayer2Lives,
-      "player1/choice": "",
-      "player2/choice": "",
-    }).then(() => {
-      setPlayer1Lives(newPlayer1Lives);
-      setPlayer2Lives(newPlayer2Lives);
-
-      if (newPlayer1Lives === 0 || newPlayer2Lives === 0) {
-        setGameFinished(true);
-        setCountdown(5);
-        if (newPlayer1Lives === 0) {
-          Swal.fire({
-            icon: "error",
-            title: "Maaf!",
-            text: "Pemain 1 kalah!",
-          });
-          if (currentPlayer === "player1") {
-            Swal.fire({
-              icon: "error",
-              title: "Maaf!",
-              text: "Kamu kalah!",
+        // Jika data sudah ada dan player belum diatur, tentukan player1 atau player2
+        if (!player) {
+          if (data.player1.name === playerName) {
+            setPlayer("player1");
+            setIsReady(data.player1.ready ? true : false);
+          } else if (data.player2.name === playerName) {
+            setPlayer("player2");
+            setIsReady(data.player2.ready ? true : false);
+          } else if (!data.player1.name) {
+            setPlayer("player1");
+            setIsReady(data.player1.ready ? true : false);
+            set(ref(db, `games/${gameId}/player1`), {
+              name: playerName,
+              choice: "",
+              lives: 3,
             });
-          } else if (currentPlayer === "player2") {
-            Swal.fire({
-              icon: "success",
-              title: "Selamat!",
-              text: "Kamu menang!",
-            });
-          }
-        } else if (newPlayer2Lives === 0) {
-          Swal.fire({
-            icon: "error",
-            title: "Maaf!",
-            text: "Pemain 2 kalah!",
-          });
-          if (currentPlayer === "player1") {
-            Swal.fire({
-              icon: "success",
-              title: "Selamat!",
-              text: "Kamu menang!",
-            });
-          } else if (currentPlayer === "player2") {
-            Swal.fire({
-              icon: "error",
-              title: "Maaf!",
-              text: "Kamu kalah!",
+          } else if (!data.player2.name) {
+            setPlayer("player2");
+            set(ref(db, `games/${gameId}/player2`), {
+              name: playerName,
+              choice: "",
+              lives: 3,
             });
           }
         }
-      } else {
-        setHasChosen(false);
       }
     });
-  };
+  }, [gameId, player]);
 
-  const [selectionCountdown, setSelectionCountdown] = useState(10);
-  const [timerActive, setTimerActive] = useState(false);
-
-  useEffect(() => {
-    if (gameData && gameData.status === "ready" && !gameFinished) {
-      if (!timerActive) {
-        setTimerActive(true);
-        setSelectionCountdown(10);
-      }
-    }
-    if (gameFinished) {
-      setSelectionCountdown(0);
-    }
-  }, [gameData, gameFinished, timerActive]);
-
-  useEffect(() => {
-    let timer;
-    if (timerActive && selectionCountdown > 0) {
-      timer = setTimeout(() => {
-        setSelectionCountdown(selectionCountdown - 1);
-      }, 1000);
-    } else if (selectionCountdown === 0) {
-      handleTimeout();
-    }
-    return () => clearTimeout(timer);
-  }, [selectionCountdown, timerActive]);
-
-  const deleteGame = () => {
-    const gameRef = ref(db, "games/" + gameId);
-    remove(gameRef)
-      .then(() => {
-        setGameId("");
-        setHasChosen(false);
-        setGameFinished(false);
-        // toast.success("Permainan selesai dan game telah dihapus.", {
-        //   autoClose: 5000, // Timeout 5 detik
-        // });
-        // navigate("/rooms");
-      })
-      .catch((error) => {
-        console.error("Gagal menghapus game: ", error);
-      });
+  const handleReady = () => {
+    // Mengatur status ready ketika player siap
+    update(ref(db, `games/${gameId}/${player}`), { ready: true });
+    setIsReady(true);
   };
 
   useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setTimeout(() => {
+    if (gameData?.player1?.ready && gameData?.player2?.ready) {
+      update(ref(db, `games/${gameId}`), { status: "ready" });
+      console.log("Game is ready!");
+    }
+  }, [gameData?.player1?.ready, gameData?.player2?.ready]);
+
+  const handleChoice = (selectedChoice) => {
+    update(ref(db, `games/${gameId}/${player}`), { choice: selectedChoice });
+    console.log(`${player} has chosen: ${selectedChoice}`);
+  };
+
+  useEffect(() => {
+    if (gameData?.status === "ready" && countdown > 0) {
+      const timer = setTimeout(() => {
         setCountdown(countdown - 1);
       }, 1000);
-    } else if (countdown === 0 && gameFinished) {
-      deleteGame();
-      toast.success("Permainan selesai dan game telah dihapus.", {
-        autoClose: 3000, // Timeout 5 detik
-      });
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
       setTimeout(() => {
-        navigate("/rooms");
-      }, 3000);
+        determineWinner();
+      }, 1000);
     }
-    return () => clearTimeout(timer);
-  }, [countdown, gameFinished]);
+  }, [gameData?.status, countdown]);
 
-  const determineWinner = (choice1, choice2) => {
-    if (choice1 === choice2) return "Draw";
-    if (
-      (choice1 === "rock" && choice2 === "scissors") ||
-      (choice1 === "scissors" && choice2 === "paper") ||
-      (choice1 === "paper" && choice2 === "rock")
-    ) {
-      return "Player 1 wins";
+  const determineWinner = () => {
+    const { player1, player2 } = gameData;
+
+    if (!player1.choice && !player2.choice) {
+      // Jika kedua pemain tidak memilih
+      console.log(
+        "Both players did not make a choice. It's a draw this round!"
+      );
+    } else if (!player1.choice) {
+      // Jika hanya player1 yang tidak memilih
+      console.log("Player1 did not make a choice. Player2 wins this round!");
+      update(ref(db, `games/${gameId}/player1`), { lives: player1.lives - 1 });
+    } else if (!player2.choice) {
+      // Jika hanya player2 yang tidak memilih
+      console.log("Player2 did not make a choice. Player1 wins this round!");
+      update(ref(db, `games/${gameId}/player2`), { lives: player2.lives - 1 });
+    } else {
+      // Jika kedua pemain memilih
+      if (player1.choice === player2.choice) {
+        console.log("It's a draw!");
+      } else if (
+        (player1.choice === "rock" && player2.choice === "scissors") ||
+        (player1.choice === "scissors" && player2.choice === "paper") ||
+        (player1.choice === "paper" && player2.choice === "rock")
+      ) {
+        console.log("Player1 wins!");
+        update(ref(db, `games/${gameId}/player2`), {
+          lives: player2.lives - 1,
+        });
+      } else {
+        console.log("Player2 wins!");
+        update(ref(db, `games/${gameId}/player1`), {
+          lives: player1.lives - 1,
+        });
+      }
     }
-    return "Player 2 wins";
+
+    // Reset pilihan (choice) kedua pemain untuk ronde baru
+    update(ref(db, `games/${gameId}/player1`), { choice: "" });
+    update(ref(db, `games/${gameId}/player2`), { choice: "" });
+
+    // Set countdown untuk ronde baru
+    setCountdown(5);
   };
 
+  useEffect(() => {
+    if (p1Lives === 0 || p2Lives === 0) {
+      endGame();
+      setTimeout(() => {
+        navigate("/rooms");
+      }, 2000);
+    }
+  }, [p2Lives, p1Lives]);
+
+  const endGame = () => {
+    const winner = gameData.player1.lives === 0 ? "Player2" : "Player1";
+    update(ref(db, `games/${gameId}`), {
+      gameOver: {
+        winner: winner,
+        loser: winner === "Player1" ? "Player2" : "Player1",
+      },
+    });
+
+    setTimeout(() => {
+      remove(ref(db, `games/${gameId}`));
+    }, 2000);
+    navigate("/rooms");
+  };
+
+  useEffect(() => {
+    const gameRef = ref(db, `games/${gameId}`);
+    onValue(gameRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data.gameOver) {
+        const currentPlayer = player === "player1" ? "Player1" : "Player2";
+        const isWinner = data.gameOver.winner === currentPlayer;
+
+        Swal.fire({
+          title: isWinner ? "You won!" : "You lost!",
+          text: "The game will end in 5 seconds...",
+          icon: isWinner ? "success" : "error",
+          timer: 5000,
+        });
+      }
+    });
+
+    return () => {
+      off(gameRef);
+    };
+  }, [gameId, player]);
+
   return (
-    <div>
-      <ToastContainer />
-      <div>
-        <>
-          <h2>Game ID: {gameId}</h2>
-          <p>Pemain saat ini: {currentPlayer}</p>
-          <div>
-            <h3>Pilih pilihanmu:</h3>
-            <button onClick={() => handleChoice("rock")}>Rock</button>
-            <button onClick={() => handleChoice("paper")}>Paper</button>
-            <button onClick={() => handleChoice("scissors")}>Scissors</button>
+    <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white">
+      <h1 className="text-4xl font-bold mb-2">Rock Paper Scissors Game</h1>
+      <h2 className="text-xl font-bold mb-3">GameId: {gameId}</h2>
+      {player && (
+        <h2 className="text-2xl mb-4">
+          You are <span className="font-bold">{player}</span>
+        </h2>
+      )}
+
+      {gameData && (
+        <div className="flex space-x-8 mb-8 text-center">
+          <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
+            <h3 className="text-xl font-bold">Player 1</h3>
+            <p className="text-lg">
+              Name: {gameData.player1.name ? gameData.player1.name : "-"}
+            </p>
+            <p className="text-lg">Lives: {gameData.player1.lives}</p>
           </div>
-          <p>
-            Player 1 ({player1Name}) lives: {player1Lives}
-          </p>{" "}
-          {/* Tampilkan nama Player 1 */}
-          <p>
-            Player 2 ({player2Name}) lives: {player2Lives}
-          </p>{" "}
-          {/* Tampilkan nama Player 2 */}
-          <p>Countdown: {selectionCountdown}</p>
-        </>
-      </div>
+          <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
+            <h3 className="text-xl font-bold">Player 2</h3>
+            <p className="text-lg">
+              Name: {gameData.player2.name ? gameData.player1.name : "-"}
+            </p>
+            <p className="text-lg">Lives: {gameData.player2.lives}</p>
+          </div>
+        </div>
+      )}
+
+      {!isReady && (
+        <button
+          onClick={handleReady}
+          className="bg-color1 hover:bg-color1/80 text-color2 font-bold py-2 px-4 rounded mb-4"
+        >
+          Ready
+        </button>
+      )}
+
+      {gameData?.status === "ready" && (
+        <h3 className="text-3xl mb-4">Countdown: {countdown}</h3>
+      )}
+
+      {gameData?.status === "ready" && countdown > 0 && (
+        <div className="flex space-x-4">
+          <button
+            onClick={() => handleChoice("rock")}
+            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+          >
+            <img
+              src="https://img.icons8.com/?size=100&id=37630&format=png&color=000000"
+              alt="rock"
+            />
+            Rock
+          </button>
+          <button
+            onClick={() => handleChoice("paper")}
+            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+          >
+            <img
+              src="https://img.icons8.com/?size=100&id=77781&format=png&color=000000"
+              alt="paper"
+            />
+            Paper
+          </button>
+          <button
+            onClick={() => handleChoice("scissors")}
+            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+          >
+            <img
+              src="https://img.icons8.com/?size=100&id=38895&format=png&color=000000"
+              alt="scissors"
+            />
+            Scissors
+          </button>
+        </div>
+      )}
     </div>
   );
 };
