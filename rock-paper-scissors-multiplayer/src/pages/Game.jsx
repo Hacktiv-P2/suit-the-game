@@ -20,8 +20,13 @@ const Game = () => {
   const [isReady, setIsReady] = useState(false);
   const [p1Lives, setP1Lives] = useState(3);
   const [p2Lives, setP2Lives] = useState(3);
-  const [countdown, setCountdown] = useState(5); // countdown 10 detik
+  const [countdown, setCountdown] = useState(10); // countdown 10 detik
+  const [selectedChoice, setSelectedChoice] = useState(null); // Pilihan yang dipilih oleh pemain
   const playerName = localStorage.getItem("suit_username");
+
+  // Ikon hati berdasarkan nyawa
+  const player1Icons = Array(p1Lives).fill("❤️"); // Menggunakan icon hati
+  const player2Icons = Array(p2Lives).fill("❤️"); // Menggunakan icon hati
 
   useEffect(() => {
     // Mendapatkan data dari Firebase berdasarkan gameId
@@ -77,6 +82,7 @@ const Game = () => {
   }, [gameData?.player1?.ready, gameData?.player2?.ready]);
 
   const handleChoice = (selectedChoice) => {
+    setSelectedChoice(selectedChoice);
     update(ref(db, `games/${gameId}/${player}`), { choice: selectedChoice });
     console.log(`${player} has chosen: ${selectedChoice}`);
   };
@@ -203,14 +209,14 @@ const Game = () => {
             <p className="text-lg">
               Name: {gameData.player1.name ? gameData.player1.name : "-"}
             </p>
-            <p className="text-lg">Lives: {gameData.player1.lives}</p>
+            <p className="text-lg">Lives: {player1Icons.join(" ")}</p>
           </div>
           <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
             <h3 className="text-xl font-bold">Player 2</h3>
             <p className="text-lg">
               Name: {gameData.player2.name ? gameData.player2.name : "-"}
             </p>
-            <p className="text-lg">Lives: {gameData.player2.lives}</p>
+            <p className="text-lg">Lives: {player2Icons.join(" ")}</p>
           </div>
         </div>
       )}
@@ -229,10 +235,12 @@ const Game = () => {
       )}
 
       {gameData?.status === "ready" && countdown > 0 && (
-        <div className="flex space-x-4">
+        <div className="flex flex-row space-x-4">
           <button
             onClick={() => handleChoice("rock")}
-            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+            className={`${
+              selectedChoice === "rock" ? "bg-blue-500" : "bg-color1"
+            } hover:bg-color1/80 text-white gap-3 font-bold py-2 px-4 rounded`}
           >
             <img
               src="https://img.icons8.com/?size=100&id=37630&format=png&color=000000"
@@ -242,7 +250,9 @@ const Game = () => {
           </button>
           <button
             onClick={() => handleChoice("paper")}
-            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+            className={`${
+              selectedChoice === "paper" ? "bg-blue-500" : "bg-color1"
+            } hover:bg-color1/80 text-white font-bold py-2 px-4 rounded`}
           >
             <img
               src="https://img.icons8.com/?size=100&id=77781&format=png&color=000000"
@@ -252,7 +262,9 @@ const Game = () => {
           </button>
           <button
             onClick={() => handleChoice("scissors")}
-            className="bg-color1 hover:bg-color1/80 text-white font-bold py-2 px-4 rounded"
+            className={`${
+              selectedChoice === "scissors" ? "bg-blue-500" : "bg-color1"
+            } hover:bg-color1/80 text-white font-bold py-2 px-4 rounded`}
           >
             <img
               src="https://img.icons8.com/?size=100&id=38895&format=png&color=000000"
@@ -264,6 +276,7 @@ const Game = () => {
       )}
     </div>
   );
-};
+}
+
 
 export default Game;
