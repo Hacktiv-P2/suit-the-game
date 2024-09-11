@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/Suit_High.png";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { DarkModeContext } from "../context/DarkModeContext";
 const Navbar = () => {
   const navigate = useNavigate();
   const handleLogout = () => {
@@ -8,24 +9,7 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem("darkMode");
-    return savedTheme === "true";
-  });
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  }
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("darkMode", "true");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("darkMode", "false");
-    }
-  }, [isDarkMode]);
+  const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
 
   return (
     <nav className="bg-color1 p-4 dark:bg-color2">
@@ -35,20 +19,20 @@ const Navbar = () => {
             src={logo}
             alt="nav-logo"
             style={{ height: "40px" }}
-            className="mr-4"
+            className="mr-4  rounded dark:bg-[#ffffff] dark:hover:bg-[#bfbdbd]"
           />
         </Link>
         <div className="flex-grow">
         <li>
             <button
               onClick={toggleDarkMode}
-              className="text-color2 hover:text-color4 p-2 rounded dark:text-color4 dark:bg-color2 dark:hover:bg-[#005291]"
+              className="text-color2 hover:text-color4 p-2 hover:bg-color2 rounded dark:text-color4 dark:bg-color2 dark:hover:bg-[#005291]"
             >
               {isDarkMode ? "Light Mode" : "Dark Mode"}
             </button>
           </li>
         </div>
-        <ul className="flex space-x-4">
+        <ul className="flex space-x-4 items-center">
           <li>
             <Link
               to={"/"}
@@ -68,7 +52,7 @@ const Navbar = () => {
           <li>
             <button
               onClick={handleLogout}
-              className="text-color2 hover:text-color4 cursor-pointer hover:bg-color2 p-2 rounded dark:text-color4 dark:hover:bg-[#870420]"
+              className="text-color2 hover:text-color4 cursor-pointer hover:bg-[#800404] p-2 rounded dark:text-color4 dark:hover:bg-[#870420]"
             >
               Logout
             </button>

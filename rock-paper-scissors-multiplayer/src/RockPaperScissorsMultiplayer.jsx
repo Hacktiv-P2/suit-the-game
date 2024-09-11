@@ -421,7 +421,7 @@ const RockPaperScissorsMultiplayer = () => {
   const player1Icons = Array(player1Lives).fill("❤️"); // Menggunakan icon hati
   const player2Icons = Array(player2Lives).fill("❤️"); // Menggunakan icon hati
   return (
-    <div className="game-container block shadow-lg" style={{ padding: '20px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', backgroundColor: '#2A2D34', maxWidth: '600px', margin: 'auto', zoom: '90%' }}>
+    <div className="game-container block shadow-lg text-white" style={{ padding: '20px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', backgroundColor: '#2A2D34', maxWidth: '600px', margin: 'auto', zoom: '90%' }}>
     <h1 style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', color: '#F7F7F7' }}>Multiplayer Showdown: Gunting Kertas Batu</h1>
     <br />
       {!gameId && (

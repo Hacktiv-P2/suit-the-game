@@ -27,7 +27,7 @@ const Login = () => {
       />
       <button
         onClick={handleLogin}
-        className="bg-color2 text-color4 hover:bg-color3 hover:text-color1 px-4 py-2 rounded"
+        className="bg-color2 text-color4 hover:bg-color3 hover:text-color1 px-4 py-2 rounded dark:text-color4 dark:hover:text-color2"
       >
         Login
       </button>
