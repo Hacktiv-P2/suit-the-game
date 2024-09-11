@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,7 +11,35 @@
         background-size: cover;
       }
     </style>
-    <title>Vite + React</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              color1: {
+                DEFAULT: "#08D9D6",
+              },
+              color2: {
+                DEFAULT: "#252A34",
+              },
+              color3: {
+                DEFAULT: "#FF2E63",
+              },
+              color4: {
+                DEFAULT: "#EAEAEA",
+              },
+            },
+          },
+        },
+        darkMode: "class",
+      };
+    </script>
+    <title>Suit - The Game</title>
   </head>
   <body>
     <div id="root"></div>

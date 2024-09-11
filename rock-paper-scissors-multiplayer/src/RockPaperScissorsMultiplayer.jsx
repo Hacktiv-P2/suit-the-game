@@ -115,6 +115,48 @@ const RockPaperScissorsMultiplayer = () => {
     }
   };
 
+  // Pemain membuat pilihan
+  const handleChoice = (choice) => {
+    const gameRef = ref(db, "games/" + gameId);
+    if (!hasChosen && !gameFinished) {
+      if (currentPlayer === "player1") {
+        update(gameRef, { "player1/choice": choice });
+      } else if (currentPlayer === "player2") {
+        update(gameRef, { "player2/choice": choice });
+      }
+      setHasChosen(true); 
+    }
+  };
+
+  // Fungsi untuk memilih secara acak
+  const getRandomChoice = () => {
+    const choices = ["rock", "paper", "scissors"];
+    return choices[Math.floor(Math.random() * choices.length)];
+  };
+
+  // Handle timeout jika pemain tidak membuat pilihan
+  const handleTimeout = async () => {
+    setTimerActive(false);
+    setHasChosen(true); // Mencegah pemain membuat pilihan lebih lanjut
+    const gameRef = ref(db, "games/" + gameId);
+
+    // Pilih acak untuk pemain yang belum memilih
+    const updates = {};
+    if (!gameData.player1.choice) {
+      updates["player1/choice"] = getRandomChoice();
+    }
+    if (!gameData.player2.choice) {
+      updates["player2/choice"] = getRandomChoice();
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await update(gameRef, updates);
+    }
+
+    // Ubah status game jika perlu
+    update(gameRef, { status: "timeout" });
+  };
+
   // Pantau data game dari Firebase
   useEffect(() => {
     if (gameId) {
@@ -230,6 +272,34 @@ const RockPaperScissorsMultiplayer = () => {
     });
   };
 
+  const [selectionCountdown, setSelectionCountdown] = useState(10); // Timer pemilihan
+  const [timerActive, setTimerActive] = useState(false); // Apakah timer aktif
+
+  useEffect(() => {
+    if (gameData && gameData.status === "ready" && !gameFinished) {
+      if (!timerActive) {
+        setTimerActive(true);
+        setSelectionCountdown(10); // Set timer 10 detik
+      }
+    }
+    if (gameFinished) {
+      setSelectionCountdown(0);
+    }
+  }, [gameData, gameFinished, timerActive]);
+
+  useEffect(() => {
+    let timer;
+    if (timerActive && selectionCountdown > 0) {
+      timer = setTimeout(() => {
+        setSelectionCountdown(selectionCountdown - 1);
+      }, 1000);
+    } else if (selectionCountdown === 0) {
+      // Waktu habis, handle timeout
+      handleTimeout();
+    }
+    return () => clearTimeout(timer); // Bersihkan timeout saat komponen di-unmount
+  }, [selectionCountdown, timerActive]);
+
   // Hapus game dari database setelah permainan selesai
   const deleteGame = () => {
     const gameRef = ref(db, "games/" + gameId);
@@ -306,10 +376,9 @@ const RockPaperScissorsMultiplayer = () => {
       }
     }
   }, [gameFinished, gameData, currentPlayer]);
-
+  
   const player1Icons = Array(player1Lives).fill("❤️"); // Menggunakan icon hati
   const player2Icons = Array(player2Lives).fill("❤️"); // Menggunakan icon hati
-
   return (
     <div className="game-container block shadow-lg" style={{ padding: '20px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', backgroundColor: '#2A2D34', maxWidth: '600px', margin: 'auto', zoom: '90%' }}>
     <h1 style={{ fontFamily: 'Arial, sans-serif', textAlign: 'center', color: '#F7F7F7' }}>Multiplayer Showdown: Gunting Kertas Batu</h1>
@@ -342,92 +411,135 @@ const RockPaperScissorsMultiplayer = () => {
       
       
       )}
-      {gameData && (
-        <>
-          {!gameFinished && (
-            <>
-            {/* indikator player */}
-              <div style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', padding: '10px', borderRadius: '5px', backgroundColor: '#f0f0f0', color: 'black' }}>{currentPlayer} {gameData[currentPlayer].choice}</div>
-              <br />
-              <div>GameId: {gameId}</div>
-              <br />
-              {currentPlayer === "player1" && <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Anda: {player1Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>}
-              {currentPlayer === "player2" && <p style={{ fontFamily: 'Arial, sans-serif' }}>Nyawa Anda: {player2Icons.map((icon, index) => <span key={index}>{icon}</span>)}</p>}
-              <br />
-              <div>
-            {currentPlayer === "player1" && <p> Provocation {'=>'}  {player2Emote}</p>}
-            {currentPlayer === "player2" && <p> Provocation {'=>'} {player1Emote}</p>}
-            </div>
-            </>
-          )}
-          {!gameFinished ? (
-            <div className="choices" style={{ fontFamily: 'Comic Sans MS, sans-serif' }}>
-              <button onClick={() => handleChoice("rock")} disabled={hasChosen} className="burning-button">
-                🪨 Batu
-                {gameData[currentPlayer].choice === "rock" && <span> ✔️</span>}
-              </button>
-              <button
-                onClick={() => handleChoice("paper")}
-                disabled={hasChosen}
-                className="burning-button"
-              >
-                📄 Kertas
-                {gameData[currentPlayer].choice === "paper" && <span> ✔️</span>}
-              </button>
-              <button
-                onClick={() => handleChoice("scissors")}
-                disabled={hasChosen}
-                className="burning-button"
-              >
-                ✂️ Gunting
-                {gameData[currentPlayer].choice === "scissors" && <span> ✔️</span>}
-              </button>
-            </div>
-          ) : (
-            <p style={{ fontFamily: 'Arial, sans-serif' }}>Permainan selesai. Menghapus game dalam {countdown} detik...</p>
-          )}
-          {!gameFinished && (
-            <>
-              <p style={{ fontFamily: 'Arial, sans-serif' }}>
-                <br />
-                Pemain 1: {gameData.player1.choice ? "Sudah memilih" : "Belum memilih"}
-              </p>
-              <p style={{ fontFamily: 'Arial, sans-serif' }}>
-                Pemain 2: {gameData.player2.choice ? "sudah memilih" : "Belum memilih"}
-              </p>
-            </>
-          )}
-          <br />
-          {gameData.player1.choice && gameData.player2.choice && (
-            <>
-              <p>
-                Hasil:{" "}
-                {determineWinner(
-                  gameData.player1.choice,
-                  gameData.player2.choice
-                )}
-              </p>
-              {gameFinished && countdown > 0 && <p>Countdown: {countdown}</p>}
-            </>
-          )}
-          <div className="emote-container">
-            <p>emote here:</p>
-            <select onChange={(e) => sendEmote(e.target.value)}>
-              <option value="">Pilih emote</option>
-              <option value="✂️">Gunting</option>
-              <option value="🪨">Batu</option>
-              <option value="📄">Kertas</option>
-              <option value="gua pilih gunting">teks: gua pilih gunting</option>
-              <option value="gua pilih batu">teks: gua pilih batu</option>
-              <option value="gua pilih kertas">teks: gua pilih kertas</option>
-            </select>
-            <br />
-            <br />
-            <input type="text" onChange={(e) => sendEmote(e.target.value)} placeholder="Ketik roastinganmu!" />
-          </div>
-          
-        </>
-      )}
+     {gameData && (
+  <>
+    {!gameFinished && (
+      <>
+        {/* indikator player */}
+        <div
+          style={{
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            padding: "10px",
+            borderRadius: "5px",
+            backgroundColor: "#f0f0f0",
+            color: "black",
+          }}
+        >
+          {currentPlayer} {gameData[currentPlayer].choice}
+        </div>
+        <br />
+        <div>GameId: {gameId}</div>
+        <br />
+        {currentPlayer === "player1" && (
+          <p style={{ fontFamily: "Arial, sans-serif" }}>
+            Nyawa Anda: {player1Icons.map((icon, index) => (
+              <span key={index}>{icon}</span>
+            ))}
+          </p>
+        )}
+        {currentPlayer === "player2" && (
+          <p style={{ fontFamily: "Arial, sans-serif" }}>
+            Nyawa Anda: {player2Icons.map((icon, index) => (
+              <span key={index}>{icon}</span>
+            ))}
+          </p>
+        )}
+        <br />
+        <div>
+          {currentPlayer === "player1" && <p> Provocation {'=>'} {player2Emote}</p>}
+          {currentPlayer === "player2" && <p> Provocation {'=>'} {player1Emote}</p>}
+        </div>
+      </>
+    )}
+    {!gameFinished ? (
+      <div className="choices" style={{ fontFamily: "Comic Sans MS, sans-serif" }}>
+        <button
+          onClick={() => handleChoice("rock")}
+          disabled={hasChosen || selectionCountdown === 0}
+          className="burning-button"
+        >
+          🪨 Batu
+          {gameData[currentPlayer].choice === "rock" && <span> ✔️</span>}
+        </button>
+        <button
+          onClick={() => handleChoice("paper")}
+          disabled={hasChosen || selectionCountdown === 0}
+          className="burning-button"
+        >
+          📄 Kertas
+          {gameData[currentPlayer].choice === "paper" && <span> ✔️</span>}
+        </button>
+        <button
+          onClick={() => handleChoice("scissors")}
+          disabled={hasChosen || selectionCountdown === 0}
+          className="burning-button"
+        >
+          ✂️ Gunting
+          {gameData[currentPlayer].choice === "scissors" && <span> ✔️</span>}
+        </button>
+      </div>
+    ) : (
+      <p style={{ fontFamily: "Arial, sans-serif" }}>
+        Permainan selesai. Menghapus game dalam {countdown} detik...
+      </p>
+    )}
+    {!gameFinished && (
+      <>
+        <p style={{ fontFamily: "Arial, sans-serif" }}>
+          Pemain 1: {gameData.player1.choice ? "Sudah memilih" : "Belum memilih"}
+        </p>
+        <p style={{ fontFamily: "Arial, sans-serif" }}>
+          Pemain 2: {gameData.player2.choice ? "Sudah memilih" : "Belum memilih"}
+        </p>
+      </>
+    )}
+    <br />
+    {selectionCountdown > 0 && gameData.status === "ready" && (
+      <p>Waktu pemilihan tersisa: {selectionCountdown} detik</p>
+    )}
+    {gameFinished && (
+      <p>Permainan selesai. Menghapus game dalam {countdown} detik...</p>
+    )}
+    <p>
+      Pemain 1 memilih: {gameData.player1.choice ? "Sudah Memilih" : "Belum memilih"}
+      {gameFinished && <span> (Pilihan: {gameData.player1.choice})</span>}
+    </p>
+    <p>
+      Pemain 2 memilih: {gameData.player2.choice ? "Sudah Memilih" : "Belum memilih"}
+      {gameFinished && <span> (Pilihan: {gameData.player2.choice})</span>}
+    </p>
+
+    {gameData.player1.choice && gameData.player2.choice && (
+      <>
+        <p>
+          Hasil: {determineWinner(gameData.player1.choice, gameData.player2.choice)}
+        </p>
+        {gameFinished && countdown > 0}
+      </>
+    )}
+
+    <div className="emote-container">
+      <p>emote here:</p>
+      <select onChange={(e) => sendEmote(e.target.value)}>
+        <option value="">Pilih emote</option>
+        <option value="✂️">Gunting</option>
+        <option value="🪨">Batu</option>
+        <option value="📄">Kertas</option>
+        <option value="gua pilih gunting">teks: gua pilih gunting</option>
+        <option value="gua pilih batu">teks: gua pilih batu</option>
+        <option value="gua pilih kertas">teks: gua pilih kertas</option>
+      </select>
+      <br />
+      <br />
+      <input
+        type="text"
+        onChange={(e) => sendEmote(e.target.value)}
+        placeholder="Ketik roastinganmu!"
+      />
+    </div>
+  </>
+)}
+
       <ToastContainer />
       {/* Menyematkan video YouTube tanpa tampilan */}
       <iframe 
