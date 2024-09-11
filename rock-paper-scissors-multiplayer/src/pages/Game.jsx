@@ -22,6 +22,8 @@ const Game = () => {
   const [p2Lives, setP2Lives] = useState(3);
   const [countdown, setCountdown] = useState(10); // countdown 10 detik
   const [selectedChoice, setSelectedChoice] = useState(null); // Pilihan yang dipilih oleh pemain
+  const [player1Emote, setPlayer1Emote] = useState(null); // Emote untuk player 1
+  const [player2Emote, setPlayer2Emote] = useState(null); // Emote untuk player 2
   const playerName = localStorage.getItem("suit_username");
 
   // Ikon hati berdasarkan nyawa
@@ -35,6 +37,12 @@ const Game = () => {
       const data = snapshot.val();
       if (data) {
         setGameData(data);
+        if (data.player1.emote) {
+          setPlayer1Emote(data.player1.emote);
+        }
+        if (data.player2.emote) {
+          setPlayer2Emote(data.player2.emote);
+        }
         console.log("Game data updated:", data);
         setP1Lives(data.player1.lives);
         setP2Lives(data.player2.lives);
@@ -142,7 +150,7 @@ const Game = () => {
     update(ref(db, `games/${gameId}/player2`), { choice: "" });
 
     // Set countdown untuk ronde baru
-    setCountdown(5);
+    setCountdown(10); // Ubah waktu tunggu menjadi 10 detik
   };
 
   useEffect(() => {
@@ -192,6 +200,17 @@ const Game = () => {
     };
   }, [gameId, player]);
 
+  const sendEmote = (emote) => {
+    const gameRef = ref(db, `games/${gameId}`);
+    if (player === "player1") {
+      setPlayer2Emote(emote);
+      update(gameRef, { "player2/emote": emote });
+    } else if (player === "player2") {
+      setPlayer1Emote(emote);
+      update(gameRef, { "player1/emote": emote });
+    }
+  };
+
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white">
       <h1 className="text-4xl font-bold mb-2">Suit - The Game</h1>
@@ -204,20 +223,28 @@ const Game = () => {
 
       {gameData && (
         <div className="flex space-x-8 mb-8 text-center">
-          <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
-            <h3 className="text-xl font-bold">Player 1</h3>
-            <p className="text-lg">
-              Name: {gameData.player1.name ? gameData.player1.name : "-"}
-            </p>
-            <p className="text-lg">Lives: {player1Icons.join(" ")}</p>
-          </div>
-          <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
-            <h3 className="text-xl font-bold">Player 2</h3>
-            <p className="text-lg">
-              Name: {gameData.player2.name ? gameData.player2.name : "-"}
-            </p>
-            <p className="text-lg">Lives: {player2Icons.join(" ")}</p>
-          </div>
+          {player === "player1" && (
+            <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
+              <h3 className="text-xl font-bold">Player 1</h3>
+              <p className="text-lg">
+                Name: {gameData.player1.name ? gameData.player1.name : "-"}
+              </p>
+              <p className="text-lg">Lives: {player1Icons.join(" ")}</p>
+              <p className="text-lg">Provokasi : <br />
+              {player1Emote ? player1Emote : "-"}</p>
+            </div>
+          )}
+          {player === "player2" && (
+            <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
+              <h3 className="text-xl font-bold">Player 2</h3>
+              <p className="text-lg">
+                Name: {gameData.player2.name ? gameData.player2.name : "-"}
+              </p>
+              <p className="text-lg">Lives: {player2Icons.join(" ")}</p>
+              <p className="text-lg">Provokasi: <br />
+              {player2Emote ? player2Emote : "-"}</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -274,6 +301,23 @@ const Game = () => {
           </button>
         </div>
       )}
+
+      <div className="emote-container">
+        <p className="text-black">emote here:</p>
+        <select onChange={(e) => sendEmote(e.target.value, player === "player1" ? "player2" : "player1")} className="text-black">
+          <option value="">Pilih emote</option>
+          <option value="✂️">Gunting</option>
+          <option value="🪨">Batu</option>
+          <option value="📄">Kertas</option>
+          <option value="gua pilih gunting">teks: gua pilih gunting</option>
+          <option value="gua pilih batu">teks: gua pilih batu</option>
+          <option value="gua pilih kertas">teks: gua pilih kertas</option>
+        </select>
+        <br />
+        <br />
+        <p className="text-black">input text </p>
+        <input type="text" onChange={(e) => sendEmote(e.target.value, player === "player1" ? "player2" : "player1")} placeholder="Ketik roastinganmu!" className="text-black" />
+      </div>
     </div>
   );
 }
