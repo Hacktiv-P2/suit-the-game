@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2'
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -8,10 +9,18 @@ const Login = () => {
   const handleLogin = () => {
     if (username) {
       localStorage.setItem("suit_username", username);
-      alert("Login successful");
+      Swal.fire({
+        title: `Welcome, ${username}!`,
+        text: "Enjoy your game!",
+        icon: "success"
+      });
       navigate("/");
     } else {
-      alert("Please enter a username");
+      Swal.fire({
+        title: "Username cannot be empty",
+        text: "Please insert your username!",
+        icon: "error"
+      });
     }
   };
 
