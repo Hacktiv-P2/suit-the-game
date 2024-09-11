@@ -10,7 +10,7 @@ import {
   off,
 } from "firebase/database";
 import Swal from "sweetalert2";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
 
 const Game = () => {
   const { gameId } = useParams();
@@ -30,10 +30,21 @@ const Game = () => {
       const data = snapshot.val();
       if (data) {
         setGameData(data);
-        console.log("Game data updated:", data);
+        // console.log("Game data updated:", data);
         setP1Lives(data.player1.lives);
         setP2Lives(data.player2.lives);
-
+        if (
+          playerName !== data.player1.lives &&
+          playerName !== data.player1.lives
+        ) {
+          Swal.fire({
+            icon: "error",
+            title: "Room is full!",
+            timer: 1000,
+          });
+          navigate("/rooms");
+          return;
+        }
         if (!player) {
           if (data.player1.name === playerName) {
             setPlayer("player1");
@@ -247,7 +258,7 @@ const Game = () => {
 
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white">
-      <ToastContainer/>
+      <ToastContainer />
       <h1 className="text-4xl font-bold mb-2">Suit - The Game</h1>
       <h2 className="text-xl font-bold mb-3">GameId: {gameId}</h2>
       {player && (
@@ -293,8 +304,10 @@ const Game = () => {
       )}
 
       {isReady &&
-        ((!gameData?.player1?.name || !gameData?.player2?.name) ||
-        (!gameData?.player1?.ready || !gameData?.player2?.ready)) && (
+        (!gameData?.player1?.name ||
+          !gameData?.player2?.name ||
+          !gameData?.player1?.ready ||
+          !gameData?.player2?.ready) && (
           <div className="flex space-x-4">
             {" "}
             <button
