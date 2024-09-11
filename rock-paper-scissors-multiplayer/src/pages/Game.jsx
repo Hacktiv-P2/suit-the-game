@@ -19,9 +19,11 @@ const Game = () => {
   const [player1Name, setPlayer1Name] = useState("");
   const [player2Name, setPlayer2Name] = useState("");
   const playerName = localStorage.getItem("suit_username");
+  const [timer, setTimer] = useState(5); // Timer starts from 5 seconds
   const navigate = useNavigate();
 
   const handleChoice = (choice) => {
+    console.log(`Player ${currentPlayer} chose: ${choice}`);
     const gameRef = ref(db, "games/" + gameId);
     if (!gameId) {
       Swal.fire({
@@ -37,19 +39,36 @@ const Game = () => {
         update(gameRef, { "player2/choice": choice });
       }
       setHasChosen(true);
+      setTimer(5); // Reset the timer for the next player/round
     }
+  };
+
+  const randomChoice = () => {
+    const choices = ["rock", "paper", "scissors"];
+    return choices[Math.floor(Math.random() * choices.length)];
   };
 
   const joinGame = () => {
     const gameRef = ref(db, "games/" + gameId);
 
-    get(gameRef).then((snapshot) => {
+    get(gameRef).then(async (snapshot) => {
       const data = snapshot.val();
-      console.log(data);
+      console.log("Game data on join:", data);
 
       // Ensure both player1 and player2 keys exist to avoid undefined errors
       const player1Exists = data && data.player1 && data.player1.name;
       const player2Exists = data && data.player2 && data.player2.name;
+      console.log(
+        "Player 1 exists:",
+        player1Exists,
+        "Player 2 exists:",
+        player2Exists
+      );
+      console.log(data.status);
+
+      if (player1Exists && player2Exists) {
+        await update(gameRef, { status: "ready" });
+      }
 
       if (!player1Exists) {
         // Tidak ada Player 1, assign current player sebagai Player 1
@@ -89,32 +108,7 @@ const Game = () => {
     if (gameId) {
       joinGame();
     }
-  }, [gameId]); // Ensure it runs only once after `gameId` is set
-
-  const getRandomChoice = () => {
-    const choices = ["rock", "paper", "scissors"];
-    return choices[Math.floor(Math.random() * choices.length)];
-  };
-
-  const handleTimeout = async () => {
-    setTimerActive(false);
-    setHasChosen(true);
-    const gameRef = ref(db, "games/" + gameId);
-
-    const updates = {};
-    if (!gameData.player1.choice) {
-      updates["player1/choice"] = getRandomChoice();
-    }
-    if (!gameData.player2.choice) {
-      updates["player2/choice"] = getRandomChoice();
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await update(gameRef, updates);
-    }
-
-    update(gameRef, { status: "timeout" });
-  };
+  }, [player1Name, player2Name]); // Ensure it runs only once after `gameId` is set
 
   useEffect(() => {
     if (gameId) {
@@ -134,6 +128,7 @@ const Game = () => {
         if (data?.player2?.name) setPlayer2Name(data.player2.name);
 
         if (data?.player1?.lives === 0 || data?.player2?.lives === 0) {
+          console.log("Game is finished");
           setGameFinished(true);
           setCountdown(5);
         }
@@ -142,11 +137,29 @@ const Game = () => {
             data.player1.choice,
             data.player2.choice
           );
+          console.log("Round result:", result);
           handleLivesUpdate(result);
         }
       });
     }
   }, [gameId, gameFinished, player1Lives, player2Lives]);
+
+  useEffect(() => {
+    let timerInterval;
+    console.log("Has chosen:", hasChosen, "Timer:", timer);
+    if (!hasChosen && !gameFinished && timer > 0) {
+      timerInterval = setTimeout(() => {
+        setTimer(timer - 1);
+      }, 1000);
+    } else if (timer === 0 && !hasChosen && !gameFinished) {
+      const choice = randomChoice(); // Random choice for the current player
+      console.log("Timer expired, random choice:", choice);
+
+      handleChoice(choice);
+    }
+
+    return () => clearTimeout(timerInterval); // Cleanup timer
+  }, [timer, hasChosen, gameFinished]);
 
   const handleLivesUpdate = (result) => {
     let newPlayer1Lives = player1Lives;
@@ -157,6 +170,13 @@ const Game = () => {
     } else if (result === "Player 2 wins") {
       newPlayer1Lives = Math.max(player1Lives - 1, 0);
     }
+
+    console.log(
+      "Lives updated: Player 1:",
+      newPlayer1Lives,
+      "Player 2:",
+      newPlayer2Lives
+    );
 
     const gameRef = ref(db, "games/" + gameId);
     update(gameRef, {
@@ -216,44 +236,14 @@ const Game = () => {
     });
   };
 
-  const [selectionCountdown, setSelectionCountdown] = useState(10);
-  const [timerActive, setTimerActive] = useState(false);
-
-  useEffect(() => {
-    if (gameData && gameData.status === "ready" && !gameFinished) {
-      if (!timerActive) {
-        setTimerActive(true);
-        setSelectionCountdown(10);
-      }
-    }
-    if (gameFinished) {
-      setSelectionCountdown(0);
-    }
-  }, [gameData, gameFinished, timerActive]);
-
-  useEffect(() => {
-    let timer;
-    if (timerActive && selectionCountdown > 0) {
-      timer = setTimeout(() => {
-        setSelectionCountdown(selectionCountdown - 1);
-      }, 1000);
-    } else if (selectionCountdown === 0) {
-      handleTimeout();
-    }
-    return () => clearTimeout(timer);
-  }, [selectionCountdown, timerActive]);
-
   const deleteGame = () => {
     const gameRef = ref(db, "games/" + gameId);
     remove(gameRef)
       .then(() => {
+        console.log("Game deleted");
         setGameId("");
         setHasChosen(false);
         setGameFinished(false);
-        // toast.success("Permainan selesai dan game telah dihapus.", {
-        //   autoClose: 5000, // Timeout 5 detik
-        // });
-        // navigate("/rooms");
       })
       .catch((error) => {
         console.error("Gagal menghapus game: ", error);
@@ -311,7 +301,7 @@ const Game = () => {
             Player 2 ({player2Name}) lives: {player2Lives}
           </p>{" "}
           {/* Tampilkan nama Player 2 */}
-          <p>Countdown: {selectionCountdown}</p>
+          <p>Timer: {timer} seconds</p>
         </>
       </div>
     </div>
