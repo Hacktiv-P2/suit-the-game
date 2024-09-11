@@ -118,7 +118,7 @@ const Rooms = () => {
           Object.keys(gameRooms).map((roomId) => (
             <div
               key={roomId}
-              className="bg-color1 text-color2 p-4 rounded-lg shadow-md w-80"
+              className="bg-color1 text-color2 p-4 rounded-lg shadow-md w-80 dark:bg-[#095f94] dark:text-[#dbdaa7]"
             >
               <h2 className="text-lg font-bold mb-2">Room ID: {roomId}</h2>
               <div className="mb-4">
@@ -158,8 +158,8 @@ const Rooms = () => {
               <p
                 className={
                   gameRooms[roomId].status === "waiting"
-                    ? "bg-color3 text-white px-2 py-1 rounded"
-                    : "bg-color2 text-white px-2 py-1 rounded"
+                    ? "bg-color3 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
+                    : "bg-color2 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
                 }
               >
                 Status: {gameRooms[roomId].status}
@@ -179,13 +179,13 @@ const Rooms = () => {
                     <input
                       type="password"
                       placeholder="Enter room password"
-                      className="mt-4 p-2 border rounded w-full"
+                      className="mt-4 p-2 border rounded w-full placeholder-gray-500 dark:text-color2"
                       value={passwordInput}
                       onChange={(e) => setPasswordInput(e.target.value)}
                     />
                     <button
                       onClick={() => handleDeleteRoom(roomId)}
-                      className="mt-4 bg-color3 mx-2 text-white px-4 py-2 rounded hover:bg-red-700"
+                      className="mt-4 bg-color3 mx-2 text-white px-4 py-2 rounded hover:bg-red-700 dark:bg-[#ab1a77] dark:hover:bg-[#960e44]"
                     >
                       Confirm Delete Room
                     </button>
@@ -193,7 +193,7 @@ const Rooms = () => {
                 ) : (
                   <button
                     onClick={() => setSelectedRoomId(roomId)}
-                    className="mt-4 bg-color3 mx-2 text-white px-4 py-2 rounded hover:bg-red-700"
+                    className="mt-4 bg-color3 mx-2 text-white px-4 py-2 rounded hover:bg-red-700 dark:bg-[#ab1a77] dark:hover:bg-[#960e44]"
                   >
                     Delete Room
                   </button>
