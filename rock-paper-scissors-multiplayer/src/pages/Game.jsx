@@ -183,6 +183,28 @@ const Game = () => {
     };
   }, [gameId, player]);
 
+  const handleLeave = () => {
+    // Pastikan player ada di dalam game sebelum menghapusnya
+    if (player === "player1" || player === "player2") {
+      // Menghapus data player dari game
+      update(ref(db, `games/${gameId}/${player}`), {
+        name: "",
+        choice: "",
+        ready: false,
+        lives: 3,
+      })
+        .then(() => {
+          // Setelah pemain dihapus, navigasi ke halaman /rooms
+          navigate("/rooms");
+        })
+        .catch((error) => {
+          console.error("Error leaving game: ", error);
+        });
+    } else {
+      console.error("Player data is missing or incomplete.");
+    }
+  };
+
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white">
       <h1 className="text-4xl font-bold mb-2">Rock Paper Scissors Game</h1>
@@ -213,12 +235,20 @@ const Game = () => {
       )}
 
       {!isReady && (
-        <button
-          onClick={handleReady}
-          className="bg-color1 hover:bg-color1/80 text-color2 font-bold py-2 px-4 rounded mb-4"
-        >
-          Ready
-        </button>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleReady}
+            className="bg-color1 hover:bg-color1/80 text-color2 font-bold py-2 px-4 rounded mb-4"
+          >
+            Ready
+          </button>
+          <button
+            onClick={handleLeave}
+            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded mb-4"
+          >
+            Leave
+          </button>
+        </div>
       )}
 
       {gameData?.status === "ready" && (
