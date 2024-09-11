@@ -219,7 +219,7 @@ const Rooms = () => {
                   </p>
                   <p className="text-color2">
                     Player 1 Lives:{" "}
-                    {gameRooms[roomId].player1.lives
+                    {gameRooms[roomId]?.player1?.lives
                       ? "❤️".repeat(gameRooms[roomId]?.player1?.lives)
                       : "-"}
                   </p>
@@ -233,7 +233,7 @@ const Rooms = () => {
                   </p>
                   <p className="text-color2">
                     Player 2 Lives:{" "}
-                    {gameRooms[roomId].player2.lives
+                    {gameRooms[roomId]?.player2.lives
                       ? "❤️".repeat(gameRooms[roomId]?.player2?.lives)
                       : "-"}
                   </p>
