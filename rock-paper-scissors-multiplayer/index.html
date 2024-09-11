@@ -1,10 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-image: url('https://png.pngtree.com/png-vector/20240515/ourlarge/pngtree-rock-paper-scissors-seamless-pattern-png-image_12467696.png');
+        background-size: cover;
+      }
+    </style>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              color1: {
+                DEFAULT: "#08D9D6",
+              },
+              color2: {
+                DEFAULT: "#252A34",
+              },
+              color3: {
+                DEFAULT: "#FF2E63",
+              },
+              color4: {
+                DEFAULT: "#EAEAEA",
+              },
+            },
+          },
+        },
+        darkMode: "class",
+      };
+    </script>
+    <title>Suit - The Game</title>
   </head>
   <body>
     <div id="root"></div>

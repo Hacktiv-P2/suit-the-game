@@ -1,0 +1,91 @@
+/* Button Buat Game */
+.buatGame-btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #11566d; /* Warna oranye */
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.buatGame-btn:hover {
+    background-color: #1c0d0c; 
+}
+
+.buatGame-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(255,165,0,0.5) 0%, rgba(255,69,0,0) 80%);
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 0.4s ease-in-out;
+    animation: flames 1s ease-in-out infinite;
+}
+
+.buatGame-btn:hover::before {
+    opacity: 1;
+    animation: flames 1s ease-in-out infinite;
+}
+
+/* Animasi Terbakar */
+@keyframes flames {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-20px) scale(1.2);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-40px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Button Bergabung ke Game */
+.joinGame-btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #9C27B0; /* Warna ungu */
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.joinGame-btn:hover {
+    background-color: #110f12; /* Warna ungu gelap */
+}
+
+.joinGame-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(255,165,0,0.5) 0%, rgba(255,69,0,0) 80%);
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 0.4s ease-in-out;
+    animation: flames 1s ease-in-out infinite;
+}
+
+.joinGame-btn:hover::before {
+    opacity: 1;
+    animation: flames 1s ease-in-out infinite;
+}
