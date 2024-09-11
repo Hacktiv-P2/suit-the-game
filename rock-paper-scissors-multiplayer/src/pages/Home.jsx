@@ -7,7 +7,7 @@ const Home = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 p-6">
       {/* Hero Section */}
       <div className="text-center items-center justify-center mb-10">
-        <img src={logo} style={{ height: "300px" }} className="mx-auto mb-8" />
+        <img src={logo} style={{ height: "300px" }} className="mx-auto mb-8 dark:bg-[#dedede] rounded" />
         <p className="text-xl text-color2 dark:text-gray-300">
           Welcome to "Suit the Game" – a multiplayer rock-paper-scissors game!
         </p>
