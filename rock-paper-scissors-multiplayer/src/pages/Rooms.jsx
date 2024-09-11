@@ -147,7 +147,7 @@ const Rooms = () => {
         {!showPasswordInput ? (
           <button
             onClick={handleShowPasswordInput} // Menampilkan input password ketika ditekan
-            className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
+            className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80 dark:bg-[#095f94] dark:hover:bg-[#095f94]/80 dark:text-[#dbdaa7] mb-4"
           >
             Create New Game Room
           </button>
@@ -190,7 +190,7 @@ const Rooms = () => {
         />
         <button
           onClick={handleJoinGameById}
-          className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80"
+          className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80 dark:bg-[#095f94] dark:hover:bg-[#095f94]/80 dark:text-[#dbdaa7]"
         >
           Join Game by ID
         </button>
@@ -243,7 +243,7 @@ const Rooms = () => {
                 className={
                   gameRooms[roomId]?.status === "waiting"
                     ? "bg-color3 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
-                    : "bg-color2 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
+                    : "bg-color2 text-white px-2 py-1 rounded dark:bg-color2 dark:text-[#dbdaa7]"
                 }
               >
                 Status: {gameRooms[roomId]?.status}
