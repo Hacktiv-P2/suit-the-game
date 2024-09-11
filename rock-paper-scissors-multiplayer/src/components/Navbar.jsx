@@ -66,12 +66,12 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link
+            <button
               onClick={handleLogout}
               className="text-color2 hover:text-color4 cursor-pointer hover:bg-color2 p-2 rounded dark:text-color4 dark:hover:bg-[#870420]"
             >
               Logout
-            </Link>
+            </button>
           </li>
         </ul>
       </div>

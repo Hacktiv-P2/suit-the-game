@@ -18,7 +18,6 @@ const Game = () => {
   const [player2Lives, setPlayer2Lives] = useState(3);
   const [player1Name, setPlayer1Name] = useState("");
   const [player2Name, setPlayer2Name] = useState("");
-  
   const playerName = localStorage.getItem("suit_username");
 
   const handleChoice = (choice) => {
