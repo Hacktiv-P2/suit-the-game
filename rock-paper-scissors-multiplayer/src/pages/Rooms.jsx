@@ -263,9 +263,10 @@ const Rooms = () => {
                 Status: {gameRooms[roomId]?.status}
               </p>
               <div className="text-center">
-                {(gameRooms[roomId]?.status === "waiting" ||
-                  playerName === gameRooms[roomId]?.player1?.name ||
-                  playerName === gameRooms[roomId]?.player2?.name) && (
+                {(playerName === gameRooms[roomId]?.player1?.name ||
+                  playerName === gameRooms[roomId]?.player2?.name ||
+                  !gameRooms[roomId]?.player1?.name ||
+                  !gameRooms[roomId]?.player2?.name) && (
                   <button
                     onClick={() => handleEnterGame(roomId)}
                     className="mt-4 bg-color2 mx-2 text-white px-4 py-2 rounded hover:bg-color2/80"
