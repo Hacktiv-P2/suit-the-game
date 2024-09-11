@@ -9,6 +9,8 @@ const Rooms = () => {
   const [passwordInput, setPasswordInput] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [gameIdInput, setGameIdInput] = useState(""); // State untuk input gameId
+  const [roomPassword, setRoomPassword] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
   const navigate = useNavigate();
 
   const fetchGameRooms = () => {
@@ -23,6 +25,10 @@ const Rooms = () => {
     });
   };
 
+  const handleShowPasswordInput = () => {
+    setShowPasswordInput(true); // Menampilkan input password
+  };
+
   const createGameRoom = () => {
     const roomId = Date.now().toString();
     const newRoomRef = ref(db, `games/${roomId}`);
@@ -30,7 +36,7 @@ const Rooms = () => {
       player1: { choice: "", lives: 3, name: "" },
       player2: { choice: "", lives: 3, name: "" },
       status: "waiting",
-      password: "a",
+      password: roomPassword, // Gunakan password dari input pengguna
     };
 
     set(newRoomRef, roomData)
@@ -128,6 +134,7 @@ const Rooms = () => {
 
   return (
     <div className="flex flex-col items-center p-6">
+      {/* Fetch game rooms */}
       <button
         onClick={fetchGameRooms}
         className="mb-4 bg-color2 text-white px-4 py-2 rounded hover:bg-color2/80"
@@ -135,14 +142,44 @@ const Rooms = () => {
         Refresh Game Rooms
       </button>
 
-      <button
-        onClick={createGameRoom}
-        className="mb-4 bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80"
-      >
-        Create New Game Room
-      </button>
+      {/* Input for room password and creating a room */}
+      <div className="mb-4 justify-center text-center">
+        {!showPasswordInput ? (
+          <button
+            onClick={handleShowPasswordInput} // Menampilkan input password ketika ditekan
+            className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
+          >
+            Create New Game Room
+          </button>
+        ) : (
+          <>
+            <input
+              type="text"
+              placeholder="Enter Room Password"
+              value={roomPassword}
+              onChange={(e) => setRoomPassword(e.target.value)}
+              className="p-2 border rounded w-full mb-2 mt-4"
+            />
+            <button
+              onClick={createGameRoom} // Membuat ruangan setelah memasukkan password
+              className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
+            >
+              Confirm and Create Room
+            </button>
+            <button
+              onClick={() => {
+                setShowPasswordInput(false); // Menyembunyikan input password
+                setRoomPassword(""); // Mengosongkan input password
+              }}
+              className="bg-color3 text-white px-4 py-2 rounded hover:bg-color3/80 mb-4"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+      </div>
 
-      {/* Input dan tombol untuk gabung ke game dengan gameId */}
+      {/* Input for joining a room by ID */}
       <div className="flex flex-col items-center mb-6">
         <input
           type="text"
@@ -159,6 +196,7 @@ const Rooms = () => {
         </button>
       </div>
 
+      {/* Game rooms list */}
       <div className="flex flex-wrap justify-center items-center gap-6">
         {!gameRooms || Object.keys(gameRooms).length === 0 ? (
           <div className="bg-color3 text-white px-2 py-1 rounded text-center">
