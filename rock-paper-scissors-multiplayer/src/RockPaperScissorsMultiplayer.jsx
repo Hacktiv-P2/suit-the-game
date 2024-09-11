@@ -115,18 +115,6 @@ const RockPaperScissorsMultiplayer = () => {
     }
   };
 
-  // Pemain membuat pilihan
-  const handleChoice = (choice) => {
-    const gameRef = ref(db, "games/" + gameId);
-    if (!hasChosen && !gameFinished) {
-      if (currentPlayer === "player1") {
-        update(gameRef, { "player1/choice": choice });
-      } else if (currentPlayer === "player2") {
-        update(gameRef, { "player2/choice": choice });
-      }
-      setHasChosen(true); 
-    }
-  };
 
   // Fungsi untuk memilih secara acak
   const getRandomChoice = () => {

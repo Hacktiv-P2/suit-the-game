@@ -26,8 +26,8 @@ const Rooms = () => {
     const roomId = Date.now().toString();
     const newRoomRef = ref(db, `games/${roomId}`);
     const roomData = {
-      player1: { choice: "", lives: 3, name: "Player 1" },
-      player2: { choice: "", lives: 3, name: "Player 2" },
+      player1: { choice: "", lives: 3, name: "" },
+      player2: { choice: "", lives: 3, name: "" },
       status: "waiting",
       password: "a",
     };
