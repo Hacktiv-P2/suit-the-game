@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { ref, onValue, remove, set } from "firebase/database";
+import { ref, onValue, remove, set, get } from "firebase/database"; // Import get untuk validasi gameId
 import Swal from "sweetalert2"; // Import SweetAlert2
 
 const Rooms = () => {
   const [gameRooms, setGameRooms] = useState({});
-  const [passwordInput, setPasswordInput] = useState(""); 
-  const [selectedRoomId, setSelectedRoomId] = useState(null); 
+  const [passwordInput, setPasswordInput] = useState("");
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [gameIdInput, setGameIdInput] = useState(""); // State untuk input gameId
   const navigate = useNavigate();
 
   const fetchGameRooms = () => {
@@ -89,6 +90,38 @@ const Rooms = () => {
     navigate(`/game/${roomId}`);
   };
 
+  // Handler untuk gabung ke game menggunakan gameId
+  const handleJoinGameById = () => {
+    const gameRef = ref(db, `games/${gameIdInput}`);
+    if (!gameIdInput) {
+      Swal.fire({
+        icon: "warning",
+        title: "Room Not Found!",
+        text: "Room Tidak ditemukan.",
+      });
+    } else {
+      get(gameRef)
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            navigate(`/game/${gameIdInput}`);
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Game ID not found",
+              text: "Please check the Game ID and try again.",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error joining game: ", error);
+          Swal.fire({
+            icon: "error",
+            title: "Failed to join game",
+          });
+        });
+    }
+  };
+
   useEffect(() => {
     fetchGameRooms();
   }, []);
@@ -97,17 +130,34 @@ const Rooms = () => {
     <div className="flex flex-col items-center p-6">
       <button
         onClick={fetchGameRooms}
-        className="mb-4 bg-color2 text-white px-4 py-2 rounded hover:bg-color3"
+        className="mb-4 bg-color2 text-white px-4 py-2 rounded hover:bg-color2/80"
       >
         Refresh Game Rooms
       </button>
 
       <button
         onClick={createGameRoom}
-        className="mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="mb-4 bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80"
       >
         Create New Game Room
       </button>
+
+      {/* Input dan tombol untuk gabung ke game dengan gameId */}
+      <div className="flex flex-col items-center mb-6">
+        <input
+          type="text"
+          placeholder="Enter Game ID"
+          value={gameIdInput}
+          onChange={(e) => setGameIdInput(e.target.value)}
+          className="p-2 border rounded w-full mb-2"
+        />
+        <button
+          onClick={handleJoinGameById}
+          className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80"
+        >
+          Join Game by ID
+        </button>
+      </div>
 
       <div className="flex flex-wrap justify-center items-center gap-6">
         {!gameRooms || Object.keys(gameRooms).length === 0 ? (
@@ -124,33 +174,29 @@ const Rooms = () => {
               <div className="mb-4">
                 <div className="bg-color4 p-2 rounded-lg mb-2">
                   <p className="text-color2">
-                    Player 1 Name:{" "}
-                    {gameRooms[roomId].player1.name || "-"}
+                    Player 1 Name: {gameRooms[roomId].player1?.name || "-"}
                   </p>
                   <p className="text-color2">
-                    Player 1 Choice:{" "}
-                    {gameRooms[roomId].player1.choice || "-"}
+                    Player 1 Choice: {gameRooms[roomId].player1?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 1 Lives:{" "}
                     {gameRooms[roomId].player1.lives
-                      ? "❤️".repeat(gameRooms[roomId].player1.lives)
+                      ? "❤️".repeat(gameRooms[roomId].player1?.lives)
                       : "-"}
                   </p>
                 </div>
                 <div className="bg-color4 p-2 rounded-lg">
                   <p className="text-color2">
-                    Player 2 Name:{" "}
-                    {gameRooms[roomId].player2.name || "No Name"}
+                    Player 2 Name: {gameRooms[roomId].player2?.name || "No Name"}
                   </p>
                   <p className="text-color2">
-                    Player 2 Choice:{" "}
-                    {gameRooms[roomId].player2.choice || "-"}
+                    Player 2 Choice: {gameRooms[roomId].player2?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 2 Lives:{" "}
                     {gameRooms[roomId].player2.lives
-                      ? "❤️".repeat(gameRooms[roomId].player2.lives)
+                      ? "❤️".repeat(gameRooms[roomId].player2?.lives)
                       : "-"}
                   </p>
                 </div>
