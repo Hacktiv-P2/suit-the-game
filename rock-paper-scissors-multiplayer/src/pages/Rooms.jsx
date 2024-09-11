@@ -61,7 +61,7 @@ const Rooms = () => {
 
   const handleDeleteRoom = (roomId) => {
     const roomRef = ref(db, `games/${roomId}`);
-    const roomPassword = gameRooms[roomId].password;
+    const roomPassword = gameRooms[roomId]?.password;
 
     if (passwordInput === roomPassword) {
       remove(roomRef)
@@ -219,23 +219,22 @@ const Rooms = () => {
                   </p>
                   <p className="text-color2">
                     Player 1 Lives:{" "}
-                    {gameRooms[roomId]?.player1?.lives
+                    {gameRooms[roomId].player1.lives
                       ? "❤️".repeat(gameRooms[roomId]?.player1?.lives)
                       : "-"}
                   </p>
                 </div>
                 <div className="bg-color4 p-2 rounded-lg">
                   <p className="text-color2">
-                    Player 2 Name:{" "}
-                    {gameRooms[roomId]?.player2?.name || "No Name"}
+                    Player 2 Name: {gameRooms[roomId]?.player2?.name || "No Name"}
                   </p>
                   <p className="text-color2">
                     Player 2 Choice: {gameRooms[roomId]?.player2?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 2 Lives:{" "}
-                    {gameRooms[roomId]?.player2?.lives
-                      ? "❤️".repeat(gameRooms[roomId].player2?.lives)
+                    {gameRooms[roomId].player2.lives
+                      ? "❤️".repeat(gameRooms[roomId]?.player2?.lives)
                       : "-"}
                   </p>
                 </div>
