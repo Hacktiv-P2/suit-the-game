@@ -10,6 +10,7 @@ import {
   off,
 } from "firebase/database";
 import Swal from "sweetalert2";
+import "../../src/ButtonRPS.css"
 
 const Game = () => {
   const { gameId } = useParams(); // Mengambil gameId dari params
