@@ -212,29 +212,29 @@ const Rooms = () => {
               <div className="mb-4">
                 <div className="bg-color4 p-2 rounded-lg mb-2">
                   <p className="text-color2">
-                    Player 1 Name: {gameRooms[roomId].player1?.name || "-"}
+                    Player 1 Name: {gameRooms[roomId]?.player1?.name || "-"}
                   </p>
                   <p className="text-color2">
-                    Player 1 Choice: {gameRooms[roomId].player1?.choice || "-"}
+                    Player 1 Choice: {gameRooms[roomId]?.player1?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 1 Lives:{" "}
-                    {gameRooms[roomId].player1.lives
-                      ? "❤️".repeat(gameRooms[roomId].player1?.lives)
+                    {gameRooms[roomId]?.player1?.lives
+                      ? "❤️".repeat(gameRooms[roomId]?.player1?.lives)
                       : "-"}
                   </p>
                 </div>
                 <div className="bg-color4 p-2 rounded-lg">
                   <p className="text-color2">
                     Player 2 Name:{" "}
-                    {gameRooms[roomId].player2?.name || "No Name"}
+                    {gameRooms[roomId]?.player2?.name || "No Name"}
                   </p>
                   <p className="text-color2">
-                    Player 2 Choice: {gameRooms[roomId].player2?.choice || "-"}
+                    Player 2 Choice: {gameRooms[roomId]?.player2?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 2 Lives:{" "}
-                    {gameRooms[roomId].player2.lives
+                    {gameRooms[roomId]?.player2?.lives
                       ? "❤️".repeat(gameRooms[roomId].player2?.lives)
                       : "-"}
                   </p>
@@ -242,15 +242,15 @@ const Rooms = () => {
               </div>
               <p
                 className={
-                  gameRooms[roomId].status === "waiting"
+                  gameRooms[roomId]?.status === "waiting"
                     ? "bg-color3 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
                     : "bg-color2 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
                 }
               >
-                Status: {gameRooms[roomId].status}
+                Status: {gameRooms[roomId]?.status}
               </p>
               <div className="text-center">
-                {gameRooms[roomId].status === "waiting" && (
+                {gameRooms[roomId]?.status === "waiting" && (
                   <button
                     onClick={() => handleEnterGame(roomId)}
                     className="mt-4 bg-color2 mx-2 text-white px-4 py-2 rounded hover:bg-green-700"

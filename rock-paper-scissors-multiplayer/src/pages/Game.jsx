@@ -188,7 +188,7 @@ const Game = () => {
 
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white">
-      <h1 className="text-4xl font-bold mb-2">Rock Paper Scissors Game</h1>
+      <h1 className="text-4xl font-bold mb-2">Suit - The Game</h1>
       <h2 className="text-xl font-bold mb-3">GameId: {gameId}</h2>
       {player && (
         <h2 className="text-2xl mb-4">
@@ -208,7 +208,7 @@ const Game = () => {
           <div className="bg-color4 p-4 rounded-lg w-64 text-color2 truncate">
             <h3 className="text-xl font-bold">Player 2</h3>
             <p className="text-lg">
-              Name: {gameData.player2.name ? gameData.player1.name : "-"}
+              Name: {gameData.player2.name ? gameData.player2.name : "-"}
             </p>
             <p className="text-lg">Lives: {gameData.player2.lives}</p>
           </div>
