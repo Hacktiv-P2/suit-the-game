@@ -73,8 +73,19 @@ const RockPaperScissorsMultiplayer = () => {
     // setTimeout(() => setShowEmote(false), 1000); // Sembunyikan setelah 1 detik
   };
 
+  // Timer untuk pilihan
+  const [choiceTimer, setChoiceTimer] = useState(5); // 5 detik untuk memilih
+
+  const choices = ["rock", "paper", "scissors"];
+
+  // Fungsi untuk memilih acak
+  const randomChoice = () => {
+    return choices[Math.floor(Math.random() * choices.length)];
+  };
+
   // Membuat game baru
   const createGame = () => {
+    console.log("Creating a new game...");
     const newGameId = Date.now().toString();
     const gameRef = ref(db, "games/" + newGameId);
     set(gameRef, {
@@ -84,28 +95,31 @@ const RockPaperScissorsMultiplayer = () => {
     }).then(() => {
       setGameId(newGameId);
       setCurrentPlayer("player1");
-      setHasChosen(false); 
-      setGameFinished(false); 
-      setPlayer1Lives(3); 
+      setHasChosen(false);
+      setGameFinished(false);
+      setPlayer1Lives(3);
       setPlayer2Lives(3);
+      setChoiceTimer(5); // Reset timer untuk ronde baru
       muatGameAudioRef.current.play(); // Mainkan suara ketika game dimuat
       joinGameAudioRef.current.play()
-      
     });
   };
 
   // Bergabung ke game
   const joinGame = async () => {
+    console.log("Joining game with ID:", inputGameId);
     const gameRef = ref(db, "games/" + inputGameId);
     try {
       const snapshot = await get(gameRef);
       const data = snapshot.val();
       if (data && data.status === "waiting") {
+        console.log("Game is available to join.");
         setGameId(inputGameId);
         setCurrentPlayer("player2");
         await update(gameRef, { status: "ready" });
         setInputGameId("");
-        setHasChosen(false); 
+        setHasChosen(false);
+        setChoiceTimer(5); // Reset timer untuk ronde baru
       } else {
         toast.error("Game tidak tersedia atau sudah dimulai");
       }
@@ -149,12 +163,16 @@ const RockPaperScissorsMultiplayer = () => {
   useEffect(() => {
     if (gameId) {
       const gameRef = ref(db, "games/" + gameId);
+      console.log("Listening to game data...");
       onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
         setGameData(data);
 
         // Perbarui nyawa pemain di state jika perlu
-        if (data?.player1?.lives !== player1Lives || data?.player2?.lives !== player2Lives) {
+        if (
+          data?.player1?.lives !== player1Lives ||
+          data?.player2?.lives !== player2Lives
+        ) {
           setPlayer1Lives(data?.player1?.lives || 3);
           setPlayer2Lives(data?.player2?.lives || 3);
         }
@@ -167,7 +185,10 @@ const RockPaperScissorsMultiplayer = () => {
 
         // Jika kedua pemain sudah memilih, tentukan pemenang
         if (data?.player1?.choice && data?.player2?.choice && !gameFinished) {
-          const result = determineWinner(data.player1.choice, data.player2.choice);
+          const result = determineWinner(
+            data.player1.choice,
+            data.player2.choice
+          );
           handleLivesUpdate(result);
         }
 
@@ -176,6 +197,19 @@ const RockPaperScissorsMultiplayer = () => {
       });
     }
   }, [gameId, gameFinished, player1Lives, player2Lives]);
+
+  // Countdown untuk waktu memilih
+  useEffect(() => {
+    let timer;
+    if (choiceTimer > 0 && !hasChosen && !gameFinished) {
+      timer = setTimeout(() => {
+        setChoiceTimer(choiceTimer - 1);
+      }, 1000);
+    } else if (choiceTimer === 0 && !hasChosen && !gameFinished) {
+      handleChoice(randomChoice()); // Pilih acak jika waktu habis
+    }
+    return () => clearTimeout(timer);
+  }, [choiceTimer, hasChosen, gameFinished]);
 
   // Update nyawa pemain berdasarkan hasil permainan
   const handleLivesUpdate = (result) => {
@@ -194,11 +228,11 @@ const RockPaperScissorsMultiplayer = () => {
       "player1/lives": newPlayer1Lives,
       "player2/lives": newPlayer2Lives,
       "player1/choice": "",
-      "player2/choice": ""
+      "player2/choice": "",
     }).then(() => {
       setPlayer1Lives(newPlayer1Lives);
       setPlayer2Lives(newPlayer2Lives);
-      
+
       // Cek jika nyawa pemain habis, akhiri permainan dan tampilkan notifikasi
       if (newPlayer1Lives === 0 || newPlayer2Lives === 0) {
         setGameFinished(true);
@@ -256,6 +290,7 @@ const RockPaperScissorsMultiplayer = () => {
         }
       } else {
         setHasChosen(false); // Reset pilihan untuk ronde berikutnya
+        setChoiceTimer(5); // Reset timer untuk ronde berikutnya
       }
     });
   };
@@ -305,17 +340,34 @@ const RockPaperScissorsMultiplayer = () => {
   };
 
   // Countdown dan delay
+  // useEffect(() => {
+  //   let timer;
+  //   if (countdown > 0) {
+  //     timer = setTimeout(() => {
+  //       setCountdown(countdown - 1);
+  //     }, 1000);
+  //   } else if (countdown === 0 && gameFinished) {
+  //     deleteGame();
+  //   }
+  //   return () => clearTimeout(timer);
+  // }, [countdown, gameFinished]);
+
+  // Countdown dan delay, hanya mulai jika kedua pemain sudah join (status "ready")
+
   useEffect(() => {
     let timer;
-    if (countdown > 0) {
+    // Cek apakah kedua pemain sudah join (status "ready")
+    if (gameData?.status === "ready" && countdown > 0) {
       timer = setTimeout(() => {
         setCountdown(countdown - 1);
       }, 1000);
-    } else if (countdown === 0 && gameFinished) {
-      deleteGame(); 
     }
-    return () => clearTimeout(timer); 
-  }, [countdown, gameFinished]);
+    // Jika countdown habis dan game selesai, hapus game
+    if (countdown === 0 && gameFinished) {
+      deleteGame();
+    }
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount atau countdown berubah
+  }, [countdown, gameFinished, gameData?.status]);
 
   // Tentukan pemenang
   const determineWinner = (choice1, choice2) => {
@@ -329,6 +381,7 @@ const RockPaperScissorsMultiplayer = () => {
     }
     return "Player 2 wins";
   };
+
 
   // Menampilkan pesan kemenangan menggunakan Swal
   useEffect(() => {
@@ -396,9 +449,7 @@ const RockPaperScissorsMultiplayer = () => {
           Bergabung ke Game
         </button>
       </>
-      
-      
-      )}
+             )}
      {gameData && (
   <>
     {!gameFinished && (
@@ -548,8 +599,6 @@ const RockPaperScissorsMultiplayer = () => {
       <audio ref={muatGameAudioRef} src="/assets/muatgame.mp3" />
     </div>
   );
-}
-  
-  
+};
 
 export default RockPaperScissorsMultiplayer;
