@@ -111,7 +111,7 @@ const Rooms = () => {
 
       <div className="flex flex-wrap justify-center items-center gap-6">
         {!gameRooms || Object.keys(gameRooms).length === 0 ? (
-          <div className="bg-color3 text-white px-2 py-1 rounded">
+          <div className="bg-color3 text-white px-2 py-1 rounded text-center">
             No Rooms Found
           </div>
         ) : (
