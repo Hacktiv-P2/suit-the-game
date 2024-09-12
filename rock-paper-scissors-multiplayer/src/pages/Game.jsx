@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getDatabase,
@@ -26,10 +26,19 @@ const Game = () => {
   const [player1Emote, setPlayer1Emote] = useState(null); // Emote untuk player 1
   const [player2Emote, setPlayer2Emote] = useState(null); // Emote untuk player 2
   const playerName = localStorage.getItem("suit_username");
+  const rockAudioRef = useRef(null);
+  const paperAudioRef = useRef(null);
+  const scissorsAudioRef = useRef(null);
 
   // Ikon hati berdasarkan nyawa
   const player1Icons = Array(p1Lives).fill("❤️"); // Menggunakan icon hati
   const player2Icons = Array(p2Lives).fill("❤️"); // Menggunakan icon hati
+
+  useEffect(() => {
+    rockAudioRef.current = new Audio('/assets/batu.mp3');
+    paperAudioRef.current = new Audio('/assets/kertas.mp3');
+    scissorsAudioRef.current = new Audio('/assets/gunting.mp3');
+  }, []);
 
   useEffect(() => {
     // Mendapatkan data dari Firebase berdasarkan gameId
@@ -94,6 +103,14 @@ const Game = () => {
     setSelectedChoice(selectedChoice);
     update(ref(db, `games/${gameId}/${player}`), { choice: selectedChoice });
     console.log(`${player} has chosen: ${selectedChoice}`);
+    // conditional add sfx
+    if (selectedChoice === "rock") {
+      rockAudioRef.current.play();
+    } else if (selectedChoice === "paper") {
+      paperAudioRef.current.play();
+    } else if (selectedChoice === "scissors") {
+      scissorsAudioRef.current.play();
+    }
   };
 
   useEffect(() => {
