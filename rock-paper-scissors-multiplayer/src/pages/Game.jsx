@@ -29,6 +29,8 @@ const Game = () => {
   const rockAudioRef = useRef(null);
   const paperAudioRef = useRef(null);
   const scissorsAudioRef = useRef(null);
+  const winAudioRef = useRef(null); // Tambahkan referensi audio untuk menang
+  const loseAudioRef = useRef(null); // Tambahkan referensi audio untuk kalah
 
   // Ikon hati berdasarkan nyawa
   const player1Icons = Array(p1Lives).fill("❤️"); // Menggunakan icon hati
@@ -38,6 +40,8 @@ const Game = () => {
     rockAudioRef.current = new Audio('/assets/batu.mp3');
     paperAudioRef.current = new Audio('/assets/kertas.mp3');
     scissorsAudioRef.current = new Audio('/assets/gunting.mp3');
+    winAudioRef.current = new Audio("/assets/win.mp3")
+    loseAudioRef.current = new Audio("/assets/Lose.mp3")
   }, []);
 
   useEffect(() => {
@@ -203,11 +207,14 @@ const Game = () => {
       if (data.gameOver) {
         const currentPlayer = player === "player1" ? "Player1" : "Player2";
         const isWinner = data.gameOver.winner === currentPlayer;
-
+        isWinner ? winAudioRef.current.play() : loseAudioRef.current.play();
+        
         Swal.fire({
-          title: isWinner ? "You won!" : "You lost!",
-          text: "The game will end in 5 seconds...",
-          icon: isWinner ? "success" : "error",
+          title: isWinner ? "Kamu Menang!" : "Cupu!",
+          imageUrl: isWinner ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUGTFp8MOe4Q3t8-pKo2nrdGXdq--f3nJLNA&s" : "https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg", 
+          text: "Permainan akan berakhir dalam 5 detik...",
+          imageWidth: 100,
+          imageHeight: 100,
           timer: 5000,
         });
       }
