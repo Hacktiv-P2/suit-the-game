@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { ref, onValue, remove, set, get } from "firebase/database";
 import Swal from "sweetalert2";
+
 
 const Rooms = () => {
   const [gameRooms, setGameRooms] = useState({});
@@ -12,6 +13,13 @@ const Rooms = () => {
   const [roomPassword, setRoomPassword] = useState("");
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const navigate = useNavigate();
+  const clickAudioRef = useRef(null);
+  const cancelAudioRef = useRef(null)
+
+  useEffect(() => {
+    clickAudioRef.current = new Audio("/assets/click.mp3")
+    cancelAudioRef.current = new Audio("/assets/cancel.mp3")
+  }, []);
   const playerName = localStorage.getItem("suit_username");
 
   const fetchGameRooms = () => {
@@ -39,6 +47,7 @@ const Rooms = () => {
       status: "waiting",
       password: roomPassword,
     };
+    clickAudioRef.current.play()
 
     set(newRoomRef, roomData)
       .then(() => {
@@ -63,6 +72,7 @@ const Rooms = () => {
   const handleDeleteRoom = (roomId) => {
     const roomRef = ref(db, `games/${roomId}`);
     const roomPassword = gameRooms[roomId]?.password;
+    clickAudioRef.current.play()
 
     if (passwordInput === roomPassword) {
       Swal.fire({
@@ -107,10 +117,12 @@ const Rooms = () => {
 
   const handleEnterGame = (roomId) => {
     navigate(`/game/${roomId}`);
+    clickAudioRef.current.play()
   };
 
   const handleJoinGameById = () => {
     const gameRef = ref(db, `games/${gameIdInput}`);
+    clickAudioRef.current.play()
     if (!gameIdInput) {
       Swal.fire({
         icon: "warning",
@@ -182,6 +194,7 @@ const Rooms = () => {
               onClick={() => {
                 setShowPasswordInput(false); // Menyembunyikan input password
                 setRoomPassword(""); // Mengosongkan input password
+                cancelAudioRef.current.play() // Memainkan suara ketika tombol cancel diklik
               }}
               className="bg-color3 text-white px-4 py-2 rounded hover:bg-color3/80 mb-4"
             >
