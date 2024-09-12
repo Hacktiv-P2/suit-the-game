@@ -10,9 +10,8 @@ import {
   off,
 } from "firebase/database";
 import Swal from "sweetalert2";
-import "../../src/ButtonRPS.css"
+import "../../src/ButtonRPS.css";
 import { ToastContainer, toast } from "react-toastify";
-
 
 const Game = () => {
   const { gameId } = useParams();
@@ -23,29 +22,28 @@ const Game = () => {
   const [isReady, setIsReady] = useState(false);
   const [p1Lives, setP1Lives] = useState(3);
   const [p2Lives, setP2Lives] = useState(3);
-  const [countdown, setCountdown] = useState(10); // countdown 10 detik
-  const [selectedChoice, setSelectedChoice] = useState(null); // Pilihan yang dipilih oleh pemain
-  const [player1Emote, setPlayer1Emote] = useState(null); // Emote untuk player 1
-  const [player2Emote, setPlayer2Emote] = useState(null); // Emote untuk player 2
+  const [countdown, setCountdown] = useState(10);
+  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [player1Emote, setPlayer1Emote] = useState(null);
+  const [player2Emote, setPlayer2Emote] = useState(null);
   const playerName = localStorage.getItem("suit_username");
   const rockAudioRef = useRef(null);
   const paperAudioRef = useRef(null);
   const scissorsAudioRef = useRef(null);
   const clickAudioRef = useRef(null);
-  const winAudioRef = useRef(null); // Tambahkan referensi audio untuk menang
-  const loseAudioRef = useRef(null); // Tambahkan referensi audio untuk kalah
+  const winAudioRef = useRef(null);
+  const loseAudioRef = useRef(null);
 
-  // Ikon hati berdasarkan nyawa
-  const player1Icons = Array(p1Lives).fill("❤️"); // Menggunakan icon hati
-  const player2Icons = Array(p2Lives).fill("❤️"); // Menggunakan icon hati
+  const player1Icons = Array(p1Lives).fill("❤️");
+  const player2Icons = Array(p2Lives).fill("❤️");
 
   useEffect(() => {
-    rockAudioRef.current = new Audio('/assets/batu.mp3');
-    paperAudioRef.current = new Audio('/assets/kertas.mp3');
-    scissorsAudioRef.current = new Audio('/assets/gunting.mp3');
-    winAudioRef.current = new Audio("/assets/win.mp3")
-    loseAudioRef.current = new Audio("/assets/Lose.mp3")
-    clickAudioRef.current = new Audio("/assets/click.mp3")
+    rockAudioRef.current = new Audio("/assets/batu.mp3");
+    paperAudioRef.current = new Audio("/assets/kertas.mp3");
+    scissorsAudioRef.current = new Audio("/assets/gunting.mp3");
+    winAudioRef.current = new Audio("/assets/win.mp3");
+    loseAudioRef.current = new Audio("/assets/Lose.mp3");
+    clickAudioRef.current = new Audio("/assets/click.mp3");
   }, []);
 
   useEffect(() => {
@@ -63,8 +61,10 @@ const Game = () => {
         setP1Lives(data.player1.lives);
         setP2Lives(data.player2.lives);
         if (
-          playerName !== data.player1.lives &&
-          playerName !== data.player1.lives
+          data.player1.name &&
+          data.player2.name &&
+          playerName !== data.player1.name &&
+          playerName !== data.player2.name
         ) {
           Swal.fire({
             icon: "error",
@@ -105,9 +105,8 @@ const Game = () => {
   const handleReady = () => {
     update(ref(db, `games/${gameId}/${player}`), { ready: true });
     setIsReady(true);
-    clickAudioRef.current.play(); // Tambahkan suara ketika tombol ready diklik
+    clickAudioRef.current.play();
     toast.success(`${player} is ready!`);
-
   };
 
   useEffect(() => {
@@ -121,7 +120,6 @@ const Game = () => {
     setSelectedChoice(selectedChoice);
     update(ref(db, `games/${gameId}/${player}`), { choice: selectedChoice });
     console.log(`${player} has chosen: ${selectedChoice}`);
-    // conditional add sfx
     if (selectedChoice === "rock") {
       rockAudioRef.current.play();
     } else if (selectedChoice === "paper") {
@@ -210,16 +208,19 @@ const Game = () => {
 
     update(ref(db, `games/${gameId}/player1`), { choice: "" });
     update(ref(db, `games/${gameId}/player2`), { choice: "" });
-    setCountdown(10); 
+    setCountdown(10);
+    setSelectedChoice(null);
   };
 
   useEffect(() => {
-    if (p1Lives === 0 || p2Lives === 0) {
-      endGame();
-      setTimeout(() => {
-        navigate("/rooms");
-      }, 2000);
-    }
+    setTimeout(() => {
+      if (p1Lives === 0 || p2Lives === 0) {
+        endGame();
+        setTimeout(() => {
+          navigate("/rooms");
+        }, 2000);
+      }
+    }, 1000);
   }, [p2Lives, p1Lives]);
 
   const endGame = () => {
@@ -249,8 +250,10 @@ const Game = () => {
 
         Swal.fire({
           title: isWinner ? "Kamu Menang!" : "Cupu!",
-          imageUrl: isWinner ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUGTFp8MOe4Q3t8-pKo2nrdGXdq--f3nJLNA&s" : "https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg", 
-          text: "Permainan akan berakhir dalam 5 detik...",
+          imageUrl: isWinner
+            ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUGTFp8MOe4Q3t8-pKo2nrdGXdq--f3nJLNA&s"
+            : "https://banner2.cleanpng.com/20180325/ite/kisspng-moron-imageboard-5channel-lurkmore-computer-softwa-dishonoured-5ab8558b31a637.5079975515220299632034.jpg",
+          text: "Room will be deleted in 5 seconds...",
           imageWidth: 100,
           imageHeight: 100,
           timer: 5000,
@@ -263,18 +266,17 @@ const Game = () => {
     };
   }, [gameId, player]);
 
-
   const sendEmote = (emote) => {
     const gameRef = ref(db, `games/${gameId}`);
-    if (player === "player1") {
+    if (player === "player2") {
       setPlayer2Emote(emote);
       update(gameRef, { "player2/emote": emote });
-    } else if (player === "player2") {
+    } else if (player === "player1") {
       setPlayer1Emote(emote);
       update(gameRef, { "player1/emote": emote });
     }
-  }
-  
+  };
+
   const handleLeave = () => {
     Swal.fire({
       title: "Are you sure you wanna leave the room?",
@@ -309,6 +311,7 @@ const Game = () => {
         }
       }
     });
+  };
 
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white dark:bg-rose-900 dark:text-[#dbdaa7]">
@@ -322,29 +325,36 @@ const Game = () => {
       )}
 
       {gameData && (
-        <div className="flex space-x-8 mb-8 text-center">
-          {player === "player1" && (
-            <div className="bg-color4 p-4 rounded-lg w-64 text-color2 dark:bg-[#2e2d2d] dark:text-white truncate">
-              <h3 className="text-xl font-bold">Player 1</h3>
-              <p className="text-lg">
-                Name: {gameData.player1.name ? gameData.player1.name : "-"}
-              </p>
-              <p className="text-lg">Lives: {player1Icons.join(" ")}</p>
-              <p className="text-lg">Provokasi : <br />
-              {player1Emote ? player1Emote : "-"}</p>
-            </div>
-          )}
-          {player === "player2" && (
-            <div className="bg-color4 p-4 rounded-lg w-64 text-color2 dark:bg-[#2e2d2d] dark:text-white truncate">
-              <h3 className="text-xl font-bold">Player 2</h3>
-              <p className="text-lg">
-                Name: {gameData.player2.name ? gameData.player2.name : "-"}
-              </p>
-              <p className="text-lg">Lives: {player2Icons.join(" ")}</p>
-              <p className="text-lg">Provokasi: <br />
-              {player2Emote ? player2Emote : "-"}</p>
-            </div>
-          )}
+        <div className="flex justify-center space-x-8 mb-8 text-center">
+          <div className="bg-color4 p-6 rounded-lg w-64 text-color2 dark:bg-[#2e2d2d] dark:text-white shadow-lg">
+            <h3 className="text-2xl font-bold mb-2">Player 1</h3>
+            <p className="text-lg font-medium mb-1">
+              Name: {gameData.player1.name ? gameData.player1.name : "-"}{" "}
+              {gameData.player1.ready ? "(Ready)" : ""}
+            </p>
+            <p className="text-lg font-medium mb-1">
+              Lives: {player1Icons.join(" ")}
+            </p>
+            <p className="text-lg font-medium">
+              Message: <br />
+              {player1Emote ? `"${player1Emote}"` : "-"}
+            </p>
+          </div>
+
+          <div className="bg-color4 p-6 rounded-lg w-64 text-color2 dark:bg-[#2e2d2d] dark:text-white shadow-lg">
+            <h3 className="text-2xl font-bold mb-2">Player 2</h3>
+            <p className="text-lg font-medium mb-1">
+              Name: {gameData.player2.name ? gameData.player2.name : "-"}{" "}
+              {gameData.player2.ready ? "(Ready)" : ""}
+            </p>
+            <p className="text-lg font-medium mb-1">
+              Lives: {player2Icons.join(" ")}
+            </p>
+            <p className="text-lg font-medium">
+              Message: <br />
+              {player2Emote ? `"${player2Emote}"` : "-"}
+            </p>
+          </div>
         </div>
       )}
 
@@ -389,7 +399,6 @@ const Game = () => {
         <div className="flex flex-row space-x-4">
           <button
             onClick={() => handleChoice("rock")}
-
             className={`${
               selectedChoice === "rock" ? "bg-blue-500" : "bg-color1"
             } hover:bg-color1/80 text-white gap-3 font-bold py-2 px-4 rounded dark:bg-[#00918f] dark:hover:bg-[#02b5b3]`}
@@ -427,25 +436,46 @@ const Game = () => {
         </div>
       )}
 
-      <div className="emote-container">
-        <p className="text-black">emote here:</p>
-        <select onChange={(e) => sendEmote(e.target.value, player === "player1" ? "player2" : "player1")} className="text-black">
-          <option value="">Pilih emote</option>
-          <option value="✂️">Gunting</option>
-          <option value="🪨">Batu</option>
-          <option value="📄">Kertas</option>
-          <option value="gua pilih gunting">teks: gua pilih gunting</option>
-          <option value="gua pilih batu">teks: gua pilih batu</option>
-          <option value="gua pilih kertas">teks: gua pilih kertas</option>
-        </select>
-        <br />
-        <br />
-        <p className="text-black">input text </p>
-        <input type="text" onChange={(e) => sendEmote(e.target.value, player === "player1" ? "player2" : "player1")} placeholder="Ketik roastinganmu!" className="text-black" />
+      <div className="dark:bg-[#2e2d2d] dark:text-white mt-4 emote-container space-y-4 p-4 bg-white rounded-lg shadow-md">
+        <div>
+          <p className="dark:text-white text-lg font-semibold text-black mb-2  text-center">
+            Emote here:
+          </p>
+          <select
+            onChange={(e) =>
+              sendEmote(
+                e.target.value,
+                player === "player1" ? "player2" : "player1"
+              )
+            }
+            className="dark:bg-[#2e2d2d] dark:text-white block w-full p-2 border border-gray-300 rounded-md text-black text-center"
+          >
+            <option value="" disabled selected>
+              Choose emote
+            </option>
+            <option value="✂️">✂️</option>
+            <option value="🪨">🪨</option>
+            <option value="📄">📄</option>
+            <option value="I choose scissors">text: I choose scissors</option>
+            <option value="I choose rock">text: I choose rock</option>
+            <option value="I choose paper">text: I choose paper</option>
+          </select>
+        </div>
+
+        <div>
+          <p className="dark:text-white text-lg font-semibold text-black mb-2 text-center">
+            Input text:
+          </p>
+          <input
+            type="text"
+            onChange={(e) => sendEmote(e.target.value)}
+            placeholder="Send message here!"
+            className="dark:bg-[#2e2d2d] dark:text-white text-center block w-full p-2 border border-gray-300 rounded-md text-black"
+          />
+        </div>
       </div>
     </div>
   );
-}
-
+};
 
 export default Game;
