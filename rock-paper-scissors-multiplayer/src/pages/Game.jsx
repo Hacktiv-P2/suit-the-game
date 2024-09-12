@@ -309,6 +309,7 @@ const Game = () => {
         }
       }
     });
+  }
 
   return (
     <div className="bg-color3 min-h-screen flex flex-col items-center justify-center text-white dark:bg-rose-900 dark:text-[#dbdaa7]">
@@ -446,6 +447,5 @@ const Game = () => {
     </div>
   );
 }
-
 
 export default Game;

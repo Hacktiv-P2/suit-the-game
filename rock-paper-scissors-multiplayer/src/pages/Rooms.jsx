@@ -186,7 +186,7 @@ const Rooms = () => {
             />
             <button
               onClick={createGameRoom}
-              className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
+              className="mr-3 bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80 dark:bg-[#095f94] dark:hover:bg-[#095f94]/80 dark:text-[#dbdaa7] mb-4"
             >
               Confirm and Create Room
             </button>
@@ -196,7 +196,7 @@ const Rooms = () => {
                 setRoomPassword(""); // Mengosongkan input password
                 cancelAudioRef.current.play() // Memainkan suara ketika tombol cancel diklik
               }}
-              className="bg-color3 text-white px-4 py-2 rounded hover:bg-color3/80 mb-4"
+              className="bg-color3 text-white px-4 py-2 rounded hover:bg-color3/80 mb-4 dark:bg-[#a82043] dark:hover:bg-[#a82043]/80 dark:text-[#dbdaa7]"
             >
               Cancel
             </button>
