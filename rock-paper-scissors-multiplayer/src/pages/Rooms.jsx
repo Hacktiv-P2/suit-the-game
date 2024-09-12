@@ -1,15 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { ref, onValue, remove, set, get } from "firebase/database"; // Import get untuk validasi gameId
-import Swal from "sweetalert2"; // Import SweetAlert2
+import { ref, onValue, remove, set, get } from "firebase/database";
+import Swal from "sweetalert2";
 
 
 const Rooms = () => {
   const [gameRooms, setGameRooms] = useState({});
   const [passwordInput, setPasswordInput] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState(null);
-  const [gameIdInput, setGameIdInput] = useState(""); // State untuk input gameId
+  const [gameIdInput, setGameIdInput] = useState("");
   const [roomPassword, setRoomPassword] = useState("");
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const Rooms = () => {
     clickAudioRef.current = new Audio("/assets/click.mp3")
     cancelAudioRef.current = new Audio("/assets/cancel.mp3")
   }, []);
+  const playerName = localStorage.getItem("suit_username");
 
   const fetchGameRooms = () => {
     const gameRoomsRef = ref(db, "games/");
@@ -34,7 +35,7 @@ const Rooms = () => {
   };
 
   const handleShowPasswordInput = () => {
-    setShowPasswordInput(true); // Menampilkan input password
+    setShowPasswordInput(true);
   };
 
   const createGameRoom = () => {
@@ -44,7 +45,7 @@ const Rooms = () => {
       player1: { choice: "", lives: 3, name: "" },
       player2: { choice: "", lives: 3, name: "" },
       status: "waiting",
-      password: roomPassword, // Gunakan password dari input pengguna
+      password: roomPassword,
     };
     clickAudioRef.current.play()
 
@@ -70,29 +71,41 @@ const Rooms = () => {
 
   const handleDeleteRoom = (roomId) => {
     const roomRef = ref(db, `games/${roomId}`);
-    const roomPassword = gameRooms[roomId].password;
+    const roomPassword = gameRooms[roomId]?.password;
     clickAudioRef.current.play()
 
     if (passwordInput === roomPassword) {
-      remove(roomRef)
-        .then(() => {
-          Swal.fire({
-            icon: "success",
-            title: `Room ${roomId} deleted successfully!`,
-            showConfirmButton: false,
-            timer: 1500,
-          });
-          fetchGameRooms();
-          setPasswordInput("");
-          setSelectedRoomId(null);
-        })
-        .catch((error) => {
-          console.error("Error deleting room: ", error);
-          Swal.fire({
-            icon: "error",
-            title: "Error deleting room",
-          });
-        });
+      Swal.fire({
+        title: "Are you sure you wanna delete this room?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes!",
+        cancelButtonText: "No!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          remove(roomRef)
+            .then(() => {
+              Swal.fire({
+                icon: "success",
+                title: `Room ${roomId} deleted successfully!`,
+                showConfirmButton: false,
+                timer: 1500,
+              });
+              fetchGameRooms();
+              setPasswordInput("");
+              setSelectedRoomId(null);
+            })
+            .catch((error) => {
+              console.error("Error deleting room: ", error);
+              Swal.fire({
+                icon: "error",
+                title: "Error deleting room",
+              });
+            });
+        }
+      });
     } else {
       Swal.fire({
         icon: "error",
@@ -107,7 +120,6 @@ const Rooms = () => {
     clickAudioRef.current.play()
   };
 
-  // Handler untuk gabung ke game menggunakan gameId
   const handleJoinGameById = () => {
     const gameRef = ref(db, `games/${gameIdInput}`);
     clickAudioRef.current.play()
@@ -158,8 +170,8 @@ const Rooms = () => {
       <div className="mb-4 justify-center text-center">
         {!showPasswordInput ? (
           <button
-            onClick={handleShowPasswordInput} // Menampilkan input password ketika ditekan
-            className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
+            onClick={handleShowPasswordInput}
+            className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80 dark:bg-[#095f94] dark:hover:bg-[#095f94]/80 dark:text-[#dbdaa7] mb-4"
           >
             Create New Game Room
           </button>
@@ -173,7 +185,7 @@ const Rooms = () => {
               className="p-2 border rounded w-full mb-2 mt-4"
             />
             <button
-              onClick={createGameRoom} // Membuat ruangan setelah memasukkan password
+              onClick={createGameRoom}
               className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80  mb-4"
             >
               Confirm and Create Room
@@ -203,7 +215,7 @@ const Rooms = () => {
         />
         <button
           onClick={handleJoinGameById}
-          className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80"
+          className="bg-color1 text-color2 px-4 py-2 rounded hover:bg-color1/80 dark:bg-[#095f94] dark:hover:bg-[#095f94]/80 dark:text-[#dbdaa7]"
         >
           Join Game by ID
         </button>
@@ -225,7 +237,8 @@ const Rooms = () => {
               <div className="mb-4">
                 <div className="bg-color4 p-2 rounded-lg mb-2">
                   <p className="text-color2">
-                    Player 1 Name: {gameRooms[roomId]?.player1?.name || "-"}
+                    Player 1 Name: {gameRooms[roomId]?.player1?.name || "-"}{" "}
+                    {gameRooms[roomId]?.player1?.ready ? "(READY)" : ""}
                   </p>
                   <p className="text-color2">
                     Player 1 Choice: {gameRooms[roomId]?.player1?.choice || "-"}
@@ -239,16 +252,16 @@ const Rooms = () => {
                 </div>
                 <div className="bg-color4 p-2 rounded-lg">
                   <p className="text-color2">
-                    Player 2 Name:{" "}
-                    {gameRooms[roomId]?.player2?.name || "No Name"}
+                    Player 2 Name: {gameRooms[roomId]?.player2?.name || "-"}{" "}
+                    {gameRooms[roomId]?.player2?.ready ? "(READY)" : ""}
                   </p>
                   <p className="text-color2">
                     Player 2 Choice: {gameRooms[roomId]?.player2?.choice || "-"}
                   </p>
                   <p className="text-color2">
                     Player 2 Lives:{" "}
-                    {gameRooms[roomId]?.player2?.lives
-                      ? "❤️".repeat(gameRooms[roomId].player2?.lives)
+                    {gameRooms[roomId]?.player2.lives
+                      ? "❤️".repeat(gameRooms[roomId]?.player2?.lives)
                       : "-"}
                   </p>
                 </div>
@@ -257,16 +270,19 @@ const Rooms = () => {
                 className={
                   gameRooms[roomId]?.status === "waiting"
                     ? "bg-color3 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
-                    : "bg-color2 text-white px-2 py-1 rounded dark:bg-[#910c72] dark:text-[#dbdaa7]"
+                    : "bg-color2 text-white px-2 py-1 rounded dark:bg-color2 dark:text-[#dbdaa7]"
                 }
               >
                 Status: {gameRooms[roomId]?.status}
               </p>
               <div className="text-center">
-                {gameRooms[roomId]?.status === "waiting" && (
+                {(playerName === gameRooms[roomId]?.player1?.name ||
+                  playerName === gameRooms[roomId]?.player2?.name ||
+                  !gameRooms[roomId]?.player1?.name ||
+                  !gameRooms[roomId]?.player2?.name) && (
                   <button
                     onClick={() => handleEnterGame(roomId)}
-                    className="mt-4 bg-color2 mx-2 text-white px-4 py-2 rounded hover:bg-green-700"
+                    className="mt-4 bg-color2 mx-2 text-white px-4 py-2 rounded hover:bg-color2/80"
                   >
                     Enter Game
                   </button>
@@ -286,6 +302,10 @@ const Rooms = () => {
                       className="mt-4 bg-color3 mx-2 text-white px-4 py-2 rounded hover:bg-red-700 dark:bg-[#ab1a77] dark:hover:bg-[#960e44]"
                     >
                       Confirm Delete Room
+                    </button>
+                    <button onClick={() => setSelectedRoomId(null)}>
+                      {" "}
+                      Cancel
                     </button>
                   </>
                 ) : (
