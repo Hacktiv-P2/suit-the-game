@@ -82,7 +82,7 @@ const Navbar = () => {
           <li>
             <button
               onClick={handleLogout}
-              className="text-color2 hover:text-color4 cursor-pointer hover:bg-[#800404] p-2 rounded dark:text-color4 dark:hover:bg-[#870420]"
+              className="text-color2 hover:text-color4 cursor-pointer hover:bg-[#b50505] p-2 rounded dark:text-color4 dark:hover:bg-[#870420]"
             >
               Logout
             </button>
