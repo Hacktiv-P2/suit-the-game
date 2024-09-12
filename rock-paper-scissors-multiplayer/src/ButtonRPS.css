@@ -1,0 +1,31 @@
+/* Button styles */
+.bg-color1 {
+    background-color: #f0f0f0; /* Ganti dengan warna yang diinginkan */
+}
+
+.hover\:bg-color1\/80:hover {
+    background-color: rgba(240, 240, 240, 0.8); /* Ganti dengan warna yang diinginkan */
+}
+
+/* Tambahkan gaya lain sesuai kebutuhan */
+.text-white {
+    color: rgb(255, 255, 255);
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.rounded {
+    border-radius: 0.25rem; /* Ganti dengan radius yang diinginkan */
+}
