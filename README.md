@@ -42,5 +42,5 @@ SUIT THE GAME is an implementation of the classic rock-paper-scissors game using
 ### Duel
 
 <p align="center">
-  <img src="./rock-paper-scissors-multiplayer/src/assets/battle2STG.png"/>
+  <img src="./rock-paper-scissors-multiplayer/src/assets/battleSTG.png"/>
 </p>
