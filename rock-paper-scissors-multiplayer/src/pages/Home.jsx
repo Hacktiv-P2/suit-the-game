@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/Suit_High.png";
 
 const Home = () => {
+  const clickAudioRef = useRef(null);
+
+  React.useEffect(() => {
+    clickAudioRef.current = new Audio("/assets/click.mp3");
+  }, []);
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 p-6">
       {/* Hero Section */}
@@ -29,6 +34,7 @@ const Home = () => {
         <Link
           to={"/rooms"}
           className="bg-color2 text-white dark:bg-gray-700 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-color3 dark:hover:bg-gray-600"
+          onClick={() => clickAudioRef.current.play()}
         >
           Start Playing
         </Link>
