@@ -33,6 +33,8 @@ SUIT THE GAME is an implementation of the classic rock-paper-scissors game using
 - [Nur Rahman Ilhamza](https://github.com/Ilhamza123)
 - [Garindra Gustianto](https://github.com/indragusti)
 
+### [Play SUIT THE GAME](https://suit-the-game.web.app/)
+
 ### Room
 
 <p align="center">
